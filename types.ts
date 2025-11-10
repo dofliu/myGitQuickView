@@ -1,0 +1,37 @@
+
+export interface GithubUser {
+  login: string;
+  name: string;
+  avatar_url: string;
+  html_url: string;
+}
+
+export interface GithubRepo {
+  id: number;
+  name: string;
+  full_name: string;
+  private: boolean;
+  owner: {
+    login: string;
+  };
+  html_url: string;
+  description: string | null;
+  pushed_at: string;
+  language: string | null;
+  default_branch: string;
+}
+
+export interface GithubCommit {
+    commit: {
+        message: string;
+        author: {
+            date: string;
+        } | null;
+    };
+}
+
+export interface CommitInfo {
+    message: string;
+    date: string;
+    source: string;
+}

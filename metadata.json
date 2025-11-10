@@ -1,0 +1,5 @@
+{
+  "name": "GitHub Project Dashboard",
+  "description": "An application to organize and display all your GitHub projects, including private ones. It provides summary statistics, a sorted project list, and detailed views with AI-powered commit analysis to identify the development environment.",
+  "requestFramePermissions": []
+}
