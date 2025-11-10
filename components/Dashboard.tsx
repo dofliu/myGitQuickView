@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { GithubRepo, GithubUser, CommitInfo } from '../types';
 import SummaryStats from './SummaryStats';
@@ -16,6 +17,8 @@ interface DashboardProps {
   onSignOut: () => void;
   isLoading: boolean;
   isDetailLoading: boolean;
+  pinnedRepoIds: number[];
+  onTogglePin: (repoId: number) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({
@@ -27,7 +30,9 @@ const Dashboard: React.FC<DashboardProps> = ({
   onRefresh,
   onSignOut,
   isLoading,
-  isDetailLoading
+  isDetailLoading,
+  pinnedRepoIds,
+  onTogglePin,
 }) => {
   return (
     <div className="h-screen flex flex-col bg-gray-900 text-gray-200 font-sans">
@@ -36,7 +41,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       <main className="flex-grow flex overflow-hidden">
         <aside className="w-72 flex-shrink-0 bg-gray-900 border-r border-gray-800 p-4 overflow-y-auto hidden md:block">
             <h2 className="text-lg font-semibold mb-4 text-cyan-400">Projects</h2>
-            <RepoList repos={repos} selectedRepo={selectedRepo} onSelectRepo={onSelectRepo} />
+            <RepoList repos={repos} selectedRepo={selectedRepo} onSelectRepo={onSelectRepo} pinnedRepoIds={pinnedRepoIds} onTogglePin={onTogglePin} />
         </aside>
 
         <div className="flex-grow p-6 overflow-y-auto min-w-0">
@@ -49,8 +54,11 @@ const Dashboard: React.FC<DashboardProps> = ({
             />
           ) : (
             <>
+              <div className="h-40 bg-gradient-to-r from-cyan-900/50 to-purple-900/50 rounded-xl mb-8 border border-gray-700 p-8 flex items-end">
+                  <h2 className="text-3xl font-bold text-white">Welcome, {user?.name || user?.login}</h2>
+              </div>
               <SummaryStats repos={repos} />
-              <RepoGrid repos={repos} onSelectRepo={onSelectRepo} />
+              <RepoGrid repos={repos} onSelectRepo={onSelectRepo} pinnedRepoIds={pinnedRepoIds} onTogglePin={onTogglePin}/>
             </>
           )}
         </div>

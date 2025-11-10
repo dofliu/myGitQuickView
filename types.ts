@@ -8,7 +8,7 @@ export interface GithubUser {
 
 export interface GithubRepo {
   id: number;
-  name: string;
+  name:string;
   full_name: string;
   private: boolean;
   owner: {
@@ -34,4 +34,5 @@ export interface CommitInfo {
     message: string;
     date: string;
     source: string;
+    aiSummary?: string;
 }

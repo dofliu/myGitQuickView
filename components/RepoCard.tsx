@@ -1,10 +1,14 @@
+
 import React from 'react';
 import { GithubRepo } from '../types';
 import { LockIcon } from './icons/LockIcon';
+import { PinIcon } from './icons/PinIcon';
 
 interface RepoCardProps {
   repo: GithubRepo;
   onClick: () => void;
+  isPinned: boolean;
+  onTogglePin: () => void;
 }
 
 const languageColorMap: { [key: string]: string } = {
@@ -17,26 +21,40 @@ const languageColorMap: { [key: string]: string } = {
     'Jupyter Notebook': 'bg-orange-500/20 text-orange-300',
 };
 
-const RepoCard: React.FC<RepoCardProps> = ({ repo, onClick }) => {
+const RepoCard: React.FC<RepoCardProps> = ({ repo, onClick, isPinned, onTogglePin }) => {
   const description = repo.description ? 
     (repo.description.length > 100 ? repo.description.slice(0, 100) + '...' : repo.description)
     : 'No description available.';
   
   const langColor = repo.language ? languageColorMap[repo.language] || 'bg-gray-700 text-gray-300' : 'bg-gray-700 text-gray-300';
   
+  const cardClasses = `
+    bg-gray-800/60 rounded-xl p-5 border
+    hover:border-cyan-500/50 cursor-pointer transition-all duration-300 ease-in-out 
+    transform hover:-translate-y-1 flex flex-col justify-between h-full group
+    ${isPinned ? 'border-cyan-500/60 ring-2 ring-cyan-500/20' : 'border-gray-700/80'}
+  `;
+
+  const handlePinClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card's onClick from firing
+    onTogglePin();
+  };
+
   return (
-    <div
-      onClick={onClick}
-      className="bg-gray-800/60 rounded-xl p-5 border border-gray-700/80 hover:border-cyan-500/50 cursor-pointer transition-all duration-300 ease-in-out transform hover:-translate-y-1 flex flex-col justify-between h-full"
-    >
+    <div onClick={onClick} className={cardClasses}>
         <div>
             <div className="flex items-start justify-between mb-3 gap-2">
                 <h3 className="font-bold text-white text-lg flex-1 break-words">{repo.name}</h3>
-                 {repo.private && (
-                    <span title="Private repository" className="text-yellow-400/80 flex-shrink-0">
-                        <LockIcon className="h-5 w-5" />
-                    </span>
-                )}
+                <div className="flex items-center flex-shrink-0 gap-2">
+                    {repo.private && (
+                        <span title="Private repository" className="text-yellow-400/80">
+                            <LockIcon className="h-5 w-5" />
+                        </span>
+                    )}
+                    <button onClick={handlePinClick} title={isPinned ? 'Unpin repository' : 'Pin repository'} className={`transition-colors duration-200 p-1 rounded-full ${isPinned ? 'text-cyan-400' : 'text-gray-600 group-hover:text-gray-400'}`}>
+                         <PinIcon className="h-5 w-5" solid={isPinned} />
+                    </button>
+                </div>
             </div>
             <p className="text-gray-400 text-sm mb-4 h-16 break-words">{description}</p>
         </div>

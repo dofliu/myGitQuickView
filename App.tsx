@@ -4,7 +4,7 @@ import { GithubRepo, GithubUser, CommitInfo } from './types';
 import { getAllRepos, getUser } from './services/githubService';
 import AuthScreen from './components/AuthScreen';
 import Dashboard from './components/Dashboard';
-import { analyzeCommitMessage } from './services/geminiService';
+import { analyzeCommitMessage, summarizeProject } from './services/geminiService';
 import { getLatestCommit } from './services/githubService';
 
 const App: React.FC = () => {
@@ -17,6 +17,19 @@ const App: React.FC = () => {
   const [isDetailLoading, setIsDetailLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   
+  const [pinnedRepoIds, setPinnedRepoIds] = useState<number[]>(() => {
+    const savedPins = localStorage.getItem('pinnedRepos');
+    return savedPins ? JSON.parse(savedPins) : [];
+  });
+
+  const togglePinRepo = (repoId: number) => {
+    const newPinnedIds = pinnedRepoIds.includes(repoId)
+      ? pinnedRepoIds.filter(id => id !== repoId)
+      : [...pinnedRepoIds, repoId];
+    setPinnedRepoIds(newPinnedIds);
+    localStorage.setItem('pinnedRepos', JSON.stringify(newPinnedIds));
+  };
+
   const handleSignOut = () => {
     setPat(null);
     setUser(null);
@@ -60,29 +73,40 @@ const App: React.FC = () => {
     const fetchDetails = async () => {
       if (selectedRepo && pat) {
         setIsDetailLoading(true);
-        setCommitInfo(null);
+        setCommitInfo(null); // Clear previous info
         try {
           const latestCommit = await getLatestCommit(pat, selectedRepo.owner.login, selectedRepo.name);
+          
+          let commitData = {
+              message: 'No commits found for this repository.',
+              date: new Date().toISOString(),
+              source: 'Unknown',
+              aiSummary: 'Could not generate summary as no commit information was found.',
+          };
+
           if (latestCommit) {
-            const source = await analyzeCommitMessage(latestCommit.commit.message);
-            setCommitInfo({
+            // Fetch source and summary in parallel
+            const [source, summary] = await Promise.all([
+               analyzeCommitMessage(latestCommit.commit.message),
+               summarizeProject(selectedRepo.name, selectedRepo.description || '', latestCommit.commit.message)
+            ]);
+
+            commitData = {
               message: latestCommit.commit.message,
               date: latestCommit.commit.author?.date || new Date().toISOString(),
               source: source,
-            });
-          } else {
-             setCommitInfo({
-                message: 'No commits found for this repository.',
-                date: new Date().toISOString(),
-                source: 'Unknown',
-            });
+              aiSummary: summary,
+            };
           }
+          setCommitInfo(commitData);
+
         } catch (err) {
           console.error("Failed to fetch commit details:", err);
           setCommitInfo({
             message: 'Could not fetch latest commit information.',
             date: new Date().toISOString(),
             source: 'Unknown',
+            aiSummary: 'Analysis failed due to an error fetching commit data.'
           });
         } finally {
           setIsDetailLoading(false);
@@ -97,10 +121,19 @@ const App: React.FC = () => {
     return <AuthScreen onSetPat={handleSetPat} error={error} isLoading={isLoading} />;
   }
 
+  const sortedRepos = [...repos].sort((a, b) => {
+    const aIsPinned = pinnedRepoIds.includes(a.id);
+    const bIsPinned = pinnedRepoIds.includes(b.id);
+    if (aIsPinned && !bIsPinned) return -1;
+    if (!aIsPinned && bIsPinned) return 1;
+    return new Date(b.pushed_at).getTime() - new Date(a.pushed_at).getTime();
+  });
+
+
   return (
     <Dashboard
       user={user}
-      repos={repos}
+      repos={sortedRepos}
       selectedRepo={selectedRepo}
       commitInfo={commitInfo}
       onSelectRepo={setSelectedRepo}
@@ -108,6 +141,8 @@ const App: React.FC = () => {
       onSignOut={handleSignOut}
       isLoading={isLoading}
       isDetailLoading={isDetailLoading}
+      pinnedRepoIds={pinnedRepoIds}
+      onTogglePin={togglePinRepo}
     />
   );
 };

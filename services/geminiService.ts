@@ -24,3 +24,26 @@ Commit Message: "${message}"`;
     return "Analysis Failed";
   }
 };
+
+export const summarizeProject = async (name: string, description: string, latestCommit: string): Promise<string> => {
+    try {
+        const prompt = `As a senior software engineer creating a portfolio, write a concise, one-paragraph summary for the following project. Highlight its purpose, key technologies, and potential use case. Base the summary on the project name, its description, and the latest commit message.
+
+Project Name: ${name}
+Description: ${description}
+Latest Commit: "${latestCommit}"
+
+Summary:`;
+        
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt
+        });
+
+        const text = response.text.trim();
+        return text || "Could not generate a summary.";
+    } catch (error) {
+        console.error("Error summarizing project with Gemini:", error);
+        return "AI summary generation failed.";
+    }
+};
