@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { GithubRepo } from '../types';
+import { LockIcon } from './icons/LockIcon';
 
 interface RepoListProps {
   repos: GithubRepo[];
@@ -22,10 +22,10 @@ const RepoList: React.FC<RepoListProps> = ({ repos, selectedRepo, onSelectRepo }
             }`}
           >
             <div className="flex items-center justify-between">
-              <span className="truncate flex-1">{repo.name}</span>
+              <span className="flex-1 mr-2">{repo.name}</span>
               {repo.private && (
-                <span className="ml-2 text-xs bg-yellow-400/20 text-yellow-300 px-2 py-0.5 rounded-full">
-                  Private
+                <span title="Private repository" className="text-yellow-400/80 flex-shrink-0">
+                  <LockIcon className="h-4 w-4" />
                 </span>
               )}
             </div>

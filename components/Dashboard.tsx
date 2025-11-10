@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { GithubRepo, GithubUser, CommitInfo } from '../types';
 import SummaryStats from './SummaryStats';
@@ -35,12 +34,12 @@ const Dashboard: React.FC<DashboardProps> = ({
       <Header user={user} onRefresh={onRefresh} onSignOut={onSignOut} isLoading={isLoading} />
       
       <main className="flex-grow flex overflow-hidden">
-        <aside className="w-1/4 xl:w-1/5 bg-gray-900 border-r border-gray-800 p-4 overflow-y-auto hidden md:block">
+        <aside className="w-72 flex-shrink-0 bg-gray-900 border-r border-gray-800 p-4 overflow-y-auto hidden md:block">
             <h2 className="text-lg font-semibold mb-4 text-cyan-400">Projects</h2>
             <RepoList repos={repos} selectedRepo={selectedRepo} onSelectRepo={onSelectRepo} />
         </aside>
 
-        <div className="flex-grow p-6 overflow-y-auto">
+        <div className="flex-grow p-6 overflow-y-auto min-w-0">
           {selectedRepo ? (
             <RepoDetail 
               repo={selectedRepo} 

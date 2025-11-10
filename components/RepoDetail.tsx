@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { GithubRepo, CommitInfo } from '../types';
 
@@ -30,8 +29,8 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, onBack, isLoa
             <div className="bg-gray-800/50 p-8 rounded-xl border border-gray-700">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pb-6 border-b border-gray-700">
                     <div>
-                        <h2 className="text-3xl font-bold text-white">{repo.name}</h2>
-                        <p className="text-gray-400 mt-1">{repo.description || "No description."}</p>
+                        <h2 className="text-3xl font-bold text-white break-words">{repo.name}</h2>
+                        <p className="text-gray-400 mt-1 break-words">{repo.description || "No description."}</p>
                     </div>
                     <a href={repo.html_url} target="_blank" rel="noopener noreferrer" 
                        className="mt-4 md:mt-0 flex-shrink-0 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
@@ -58,7 +57,7 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, onBack, isLoa
                         <div className="space-y-4">
                             <div>
                                 <p className="text-sm text-gray-400">Commit Message</p>
-                                <p className="text-md text-white bg-gray-800 p-3 rounded-md font-mono text-sm whitespace-pre-wrap">{commitInfo.message}</p>
+                                <p className="text-md text-white bg-gray-800 p-3 rounded-md font-mono text-sm whitespace-pre-wrap break-words">{commitInfo.message}</p>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <DetailItem label="Update Time" value={new Date(commitInfo.date).toLocaleString()} />
