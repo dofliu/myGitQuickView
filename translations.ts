@@ -1,4 +1,3 @@
-
 type Translation = {
   [key: string]: string;
 };
@@ -74,6 +73,8 @@ const en: Translation = {
   noCommitInfo: 'No commit information available.',
   aiSummary: 'AI-Generated Summary',
   noAiSummary: 'Could not generate AI summary.',
+  activeBranches: 'Active Branches',
+  noOtherBranches: 'No other active branches found.',
 
   // AI Chat Panel
   portfolioAdvisor: 'Portfolio Advisor',
@@ -156,6 +157,8 @@ const zhTW: Translation = {
   noCommitInfo: '沒有可用的提交資訊。',
   aiSummary: 'AI 生成的摘要',
   noAiSummary: '無法生成 AI 摘要。',
+  activeBranches: '進行中的分支',
+  noOtherBranches: '找不到其他進行中的分支。',
   
   // AI Chat Panel
   portfolioAdvisor: '組合顧問',

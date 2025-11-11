@@ -1,4 +1,4 @@
-import { GithubUser, GithubRepo, GithubCommit, ContributionData } from '../types';
+import { GithubUser, GithubRepo, GithubCommit, ContributionData, GithubBranch } from '../types';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 
@@ -43,15 +43,28 @@ export const getAllRepos = async (token: string): Promise<GithubRepo[]> => {
   return repos;
 };
 
-export const getLatestCommit = async (token: string, owner: string, repo: string): Promise<GithubCommit | null> => {
+export const getLatestCommit = async (token: string, owner: string, repo: string, branchName?: string): Promise<GithubCommit | null> => {
     try {
-        const commits = await githubApiFetch<GithubCommit[]>(`/repos/${owner}/${repo}/commits?per_page=1`, token);
+        const params = new URLSearchParams({ per_page: '1' });
+        if (branchName) {
+            params.set('sha', branchName);
+        }
+        const commits = await githubApiFetch<GithubCommit[]>(`/repos/${owner}/${repo}/commits?${params.toString()}`, token);
         return commits[0] || null;
     } catch (error) {
-        console.error(`Could not fetch commits for ${owner}/${repo}:`, error);
+        console.error(`Could not fetch commits for ${owner}/${repo}${branchName ? ` on branch ${branchName}`: ''}:`, error);
         return null;
     }
 };
+
+export const getRepoBranches = async (token: string, owner: string, repo: string): Promise<GithubBranch[]> => {
+    try {
+        return await githubApiFetch<GithubBranch[]>(`/repos/${owner}/${repo}/branches`, token);
+    } catch (error) {
+        console.error(`Could not fetch branches for ${owner}/${repo}:`, error);
+        return [];
+    }
+}
 
 export const getContributionData = async (token: string, username: string): Promise<ContributionData> => {
   const to = new Date();

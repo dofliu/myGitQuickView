@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
-import { GithubRepo, GithubUser, CommitInfo, ContributionData } from './types';
-import { getAllRepos, getUser, getLatestCommit, getContributionData } from './services/githubService';
+import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails } from './types';
+import { getAllRepos, getUser, getLatestCommit, getContributionData, getRepoBranches } from './services/githubService';
 import { analyzeCommitMessage, summarizeProject } from './services/geminiService';
 import AuthScreen from './components/AuthScreen';
 import Dashboard from './components/Dashboard';
@@ -24,6 +23,8 @@ const AppContent: React.FC = () => {
     const savedCache = localStorage.getItem('commitCache');
     return savedCache ? JSON.parse(savedCache) : {};
   });
+  
+  const [branchCache, setBranchCache] = useState<{[repoId: number]: BranchDetails[]}>({});
 
   const [pinnedRepoIds, setPinnedRepoIds] = useState<number[]>(() => {
     const savedPins = localStorage.getItem('pinnedRepos');
@@ -87,69 +88,87 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     const fetchDetails = async () => {
       if (selectedRepo && pat) {
-        const cachedData = commitCache[selectedRepo.id]?.[language];
-        if (cachedData) {
+        const cachedCommit = commitCache[selectedRepo.id]?.[language];
+        const cachedBranches = branchCache[selectedRepo.id];
+
+        if (cachedCommit && cachedBranches) {
           setIsDetailLoading(false);
           return;
         }
 
         setIsDetailLoading(true);
         try {
-          const latestCommit = await getLatestCommit(pat, selectedRepo.owner.login, selectedRepo.name);
-          
-          let commitData: CommitInfo;
+          const promises = [];
 
-          if (latestCommit) {
-            const [source, summary] = await Promise.all([
-               analyzeCommitMessage(latestCommit.commit.message, language),
-               summarizeProject(selectedRepo.name, selectedRepo.description || '', latestCommit.commit.message, language)
-            ]);
+          // Promise for commit details and AI summary
+          if (!cachedCommit) {
+            promises.push(
+              (async () => {
+                const latestCommit = await getLatestCommit(pat, selectedRepo.owner.login, selectedRepo.name);
+                let commitData: CommitInfo;
 
-            commitData = {
-              message: latestCommit.commit.message,
-              date: latestCommit.commit.author?.date || new Date().toISOString(),
-              source: source,
-              aiSummary: summary,
-            };
-          } else {
-             commitData = {
-              message: 'No commits found for this repository.',
-              date: new Date().toISOString(),
-              source: 'Unknown',
-              aiSummary: 'Could not generate summary as no commit information was found.',
-            };
+                if (latestCommit) {
+                  const [source, summary] = await Promise.all([
+                    analyzeCommitMessage(latestCommit.commit.message, language),
+                    summarizeProject(selectedRepo.name, selectedRepo.description || '', latestCommit.commit.message, language)
+                  ]);
+                  commitData = {
+                    message: latestCommit.commit.message,
+                    date: latestCommit.commit.author?.date || new Date().toISOString(),
+                    source: source,
+                    aiSummary: summary,
+                  };
+                } else {
+                  commitData = { message: 'No commits found for this repository.', date: new Date().toISOString(), source: 'Unknown', aiSummary: 'Could not generate summary as no commit information was found.' };
+                }
+                setCommitCache(prevCache => ({ ...prevCache, [selectedRepo.id]: { ...prevCache[selectedRepo.id], [language]: commitData } }));
+              })()
+            );
+          }
+
+          // Promise for branch details
+          if (!cachedBranches) {
+            promises.push(
+              (async () => {
+                const branchesData = await getRepoBranches(pat, selectedRepo.owner.login, selectedRepo.name);
+                const branchDetailsPromises = branchesData
+                  .filter(branch => branch.name !== selectedRepo.default_branch)
+                  .map(async (branch) => {
+                    const branchCommit = await getLatestCommit(pat, selectedRepo.owner.login, selectedRepo.name, branch.name);
+                    return {
+                      name: branch.name,
+                      lastCommit: {
+                        message: branchCommit?.commit.message || 'No commit message found.',
+                        date: branchCommit?.commit.author?.date || new Date().toISOString(),
+                      }
+                    } as BranchDetails;
+                  });
+                const detailedBranches = await Promise.all(branchDetailsPromises);
+                setBranchCache(prevCache => ({
+                  ...prevCache,
+                  [selectedRepo.id]: detailedBranches
+                }));
+              })()
+            );
           }
           
-          setCommitCache(prevCache => ({
-              ...prevCache,
-              [selectedRepo.id]: {
-                  ...prevCache[selectedRepo.id],
-                  [language]: commitData
-              }
-          }));
+          await Promise.all(promises);
 
         } catch (err) {
-          console.error("Failed to fetch commit details:", err);
-           const errorCommitData: CommitInfo = {
-            message: 'Could not fetch latest commit information.',
-            date: new Date().toISOString(),
-            source: 'Unknown',
-            aiSummary: 'Analysis failed due to an error fetching commit data.'
-          };
+          console.error("Failed to fetch repository details:", err);
+           const errorCommitData: CommitInfo = { message: 'Could not fetch latest commit information.', date: new Date().toISOString(), source: 'Unknown', aiSummary: 'Analysis failed due to an error fetching commit data.'};
            setCommitCache(prevCache => ({
               ...prevCache,
-              [selectedRepo.id]: {
-                  ...prevCache[selectedRepo.id],
-                  [language]: errorCommitData
-              }
+              [selectedRepo.id]: { ...prevCache[selectedRepo.id], [language]: errorCommitData }
           }));
+          setBranchCache(prev => ({ ...prev, [selectedRepo.id]: [] })); // Set empty array on error
         } finally {
           setIsDetailLoading(false);
         }
       }
     };
     fetchDetails();
-  }, [selectedRepo, pat, language]);
+  }, [selectedRepo, pat, language, commitCache, branchCache]);
 
 
   if (!pat || error) {
@@ -169,6 +188,7 @@ const AppContent: React.FC = () => {
   });
   
   const currentCommitInfo = selectedRepo ? commitCache[selectedRepo.id]?.[language] : null;
+  const currentBranches = selectedRepo ? branchCache[selectedRepo.id] : null;
 
   return (
     <Dashboard
@@ -177,6 +197,7 @@ const AppContent: React.FC = () => {
       contributionData={contributionData}
       selectedRepo={selectedRepo}
       commitInfo={currentCommitInfo}
+      branches={currentBranches}
       onSelectRepo={setSelectedRepo}
       onRefresh={handleRefresh}
       onSignOut={handleSignOut}

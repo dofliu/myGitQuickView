@@ -1,11 +1,11 @@
-
 import React from 'react';
-import { GithubRepo, CommitInfo } from '../types';
+import { GithubRepo, CommitInfo, BranchDetails } from '../types';
 import { useLocalization } from '../contexts/LocalizationContext';
 
 interface RepoDetailProps {
   repo: GithubRepo;
   commitInfo: CommitInfo | null;
+  branches: BranchDetails[] | null;
   onBack: () => void;
   isLoading: boolean;
 }
@@ -24,7 +24,7 @@ const LoadingSpinner: React.FC = () => (
     </svg>
 );
 
-const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, onBack, isLoading }) => {
+const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, onBack, isLoading }) => {
     const { t } = useLocalization();
     
     return (
@@ -76,6 +76,29 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, onBack, isLoa
                     </div>
                 ) : (
                     <p className="text-gray-400">{t('noCommitInfo')}</p>
+                )}
+            </div>
+
+             <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
+                <h3 className="text-lg font-semibold text-cyan-400 mb-4">{t('activeBranches')}</h3>
+                {isLoading ? (
+                    <div className="flex items-center justify-center h-20"><LoadingSpinner /></div>
+                ) : branches && branches.length > 0 ? (
+                    <ul className="space-y-4">
+                        {branches.map(branch => (
+                            <li key={branch.name} className="bg-gray-900/60 p-4 rounded-lg border border-gray-700/50">
+                                <div className="flex justify-between items-start mb-2 gap-4">
+                                    <p className="text-md text-white font-bold font-mono break-all">{branch.name}</p>
+                                    <p className="text-xs text-gray-400 flex-shrink-0">{new Date(branch.lastCommit.date).toLocaleDateString()}</p>
+                                </div>
+                                <p className="text-sm text-gray-300 font-mono bg-gray-800/50 p-2 rounded truncate" title={branch.lastCommit.message}>
+                                    {branch.lastCommit.message.split('\n')[0]}
+                                </p>
+                            </li>
+                        ))}
+                    </ul>
+                ) : (
+                    <p className="text-gray-500">{t('noOtherBranches')}</p>
                 )}
             </div>
 

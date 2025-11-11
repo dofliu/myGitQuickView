@@ -1,4 +1,3 @@
-
 export interface GithubUser {
   login: string;
   name: string;
@@ -53,4 +52,21 @@ export interface ContributionData {
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
+}
+
+export interface GithubBranch {
+  name: string;
+  commit: {
+    sha: string;
+    url: string;
+  };
+  protected: boolean;
+}
+
+export interface BranchDetails {
+  name: string;
+  lastCommit: {
+    message: string;
+    date: string;
+  }
 }

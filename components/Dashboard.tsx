@@ -1,5 +1,5 @@
 import React from 'react';
-import { GithubRepo, GithubUser, CommitInfo, ContributionData } from '../types';
+import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails } from '../types';
 import SummaryStats from './SummaryStats';
 import RepoList from './RepoList';
 import RepoGrid from './RepoGrid';
@@ -16,6 +16,7 @@ interface DashboardProps {
   contributionData: ContributionData | null;
   selectedRepo: GithubRepo | null;
   commitInfo: CommitInfo | null;
+  branches: BranchDetails[] | null;
   onSelectRepo: (repo: GithubRepo | null) => void;
   onRefresh: () => void;
   onSignOut: () => void;
@@ -33,6 +34,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   contributionData,
   selectedRepo,
   commitInfo,
+  branches,
   onSelectRepo,
   onRefresh,
   onSignOut,
@@ -60,16 +62,17 @@ const Dashboard: React.FC<DashboardProps> = ({
             <RepoDetail 
               repo={selectedRepo} 
               commitInfo={commitInfo}
+              branches={branches}
               onBack={() => onSelectRepo(null)}
               isLoading={isDetailLoading} 
             />
           ) : (
             <>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-                <div className="lg:col-span-2">
+              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+                <div className="xl:col-span-2">
                    {contributionData && <ContributionGraph data={contributionData} />}
                 </div>
-                <div className="lg:col-span-1">
+                <div className="xl:col-span-1">
                   <SummaryStats repos={repos} />
                 </div>
               </div>
