@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { GithubRepo, GithubUser, CommitInfo, ContributionData } from '../types';
 import SummaryStats from './SummaryStats';
 import RepoList from './RepoList';
@@ -8,9 +8,7 @@ import Header from './Header';
 import ContributionGraph from './ContributionGraph';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { SearchIcon } from './icons/SearchIcon';
-import { SparklesIcon } from './icons/SparklesIcon';
-import AiChatModal from './AiChatModal';
-import AiTaskList from './AiTaskList';
+import AiChatPanel from './AiChatPanel';
 
 interface DashboardProps {
   user: GithubUser | null;
@@ -46,7 +44,6 @@ const Dashboard: React.FC<DashboardProps> = ({
   onSearchChange,
 }) => {
   const { t } = useLocalization();
-  const [isAiModalOpen, setIsAiModalOpen] = useState(false);
 
   return (
     <div className="h-screen flex flex-col bg-gray-900 text-gray-200 font-sans">
@@ -90,29 +87,21 @@ const Dashboard: React.FC<DashboardProps> = ({
                     className="w-full bg-gray-800/50 border border-gray-700 rounded-lg pl-10 pr-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500 transition-colors"
                   />
                 </div>
-                <button 
-                  onClick={() => setIsAiModalOpen(true)}
-                  disabled={!user}
-                  className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 disabled:bg-gray-600 disabled:cursor-not-allowed"
-                >
-                  <SparklesIcon className="h-5 w-5" />
-                  {t('aiInsight')}
-                </button>
               </div>
               
-              {user && <AiTaskList repos={repos} user={user} />}
-
               <RepoGrid repos={repos} onSelectRepo={onSelectRepo} pinnedRepoIds={pinnedRepoIds} onTogglePin={onTogglePin}/>
             </>
           )}
         </div>
+        <aside className="w-[450px] flex-shrink-0 bg-gray-900/50 border-l border-gray-800 flex flex-col">
+            <AiChatPanel
+                selectedRepo={selectedRepo}
+                repos={repos}
+                user={user}
+                commitInfo={commitInfo}
+            />
+        </aside>
       </main>
-      <AiChatModal 
-        isOpen={isAiModalOpen} 
-        onClose={() => setIsAiModalOpen(false)}
-        repos={repos}
-        user={user}
-      />
     </div>
   );
 };

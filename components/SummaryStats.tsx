@@ -19,16 +19,16 @@ const SummaryStats: React.FC<SummaryStatsProps> = ({ repos }) => {
   const privateRepos = repos.filter(r => r.private).length;
   const publicRepos = totalRepos - privateRepos;
 
-  // FIX: Explicitly type the accumulator for the reduce function to prevent type inference errors.
-  // By explicitly typing the `acc` parameter, we fix the type inference issue that caused all reported errors.
-  const languageCounts = repos.reduce((acc: Record<string, number>, repo) => {
+  // FIX: Replaced `reduce` with a `for...of` loop for more robust type inference.
+  // This ensures `languageCounts` is correctly typed as `Record<string, number>`,
+  // which resolves the TypeScript error during the sort operation.
+  const languageCounts: Record<string, number> = {};
+  for (const repo of repos) {
     if (repo.language) {
-      acc[repo.language] = (acc[repo.language] || 0) + 1;
+      languageCounts[repo.language] = (languageCounts[repo.language] || 0) + 1;
     }
-    return acc;
-  }, {});
+  }
 
-  // FIX: Use index-based access in sort to ensure type safety for numeric comparison.
   const sortedLanguages = Object.entries(languageCounts).sort((a, b) => b[1] - a[1]).slice(0, 4);
 
   return (

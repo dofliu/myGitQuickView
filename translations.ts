@@ -38,7 +38,6 @@ const en: Translation = {
   projects: 'Projects',
   welcome: 'Welcome',
   searchProjects: 'Search projects...',
-  aiInsight: 'AI Career Insight',
   
   // Contribution Graph
   contributionsInLast3Months: '{count} contributions in the last 3 months',
@@ -76,14 +75,12 @@ const en: Translation = {
   aiSummary: 'AI-Generated Summary',
   noAiSummary: 'Could not generate AI summary.',
 
-  // AI Task List
-  aiTaskListTitle: "What's Next? AI Suggestions",
-  generatingTasks: 'Generating your next steps...',
-
-  // AI Chat Modal
-  insightTitle: 'Portfolio Analysis & Career Insight',
-  generatingInsight: 'Generating your career insight... The AI is analyzing your projects, this may take a moment.',
-  chatPlaceholder: 'Ask a follow-up question about your projects...',
+  // AI Chat Panel
+  portfolioAdvisor: 'Portfolio Advisor',
+  projectAssistant: 'Project Assistant',
+  generatingInsight: 'Generating your insight... The AI is analyzing your projects, this may take a moment.',
+  chatPlaceholderGlobal: 'Ask a follow-up about your portfolio...',
+  chatPlaceholderRepo: 'Ask about {repoName}...',
   sendMessage: 'Send Message',
 };
 
@@ -122,7 +119,6 @@ const zhTW: Translation = {
   projects: '專案',
   welcome: '歡迎',
   searchProjects: '搜尋專案...',
-  aiInsight: 'AI 職涯洞察',
   
   // Contribution Graph
   contributionsInLast3Months: '最近三個月有 {count} 次貢獻',
@@ -161,14 +157,12 @@ const zhTW: Translation = {
   aiSummary: 'AI 生成的摘要',
   noAiSummary: '無法生成 AI 摘要。',
   
-  // AI Task List
-  aiTaskListTitle: "接下來做什麼？AI 建議",
-  generatingTasks: '正在生成您的下一步...',
-
-  // AI Chat Modal
-  insightTitle: '專案組合分析與職涯洞察',
-  generatingInsight: '正在為您生成職涯洞察... AI 正在分析您的專案，這可能需要一點時間。',
-  chatPlaceholder: '針對您的專案提出後續問題...',
+  // AI Chat Panel
+  portfolioAdvisor: '組合顧問',
+  projectAssistant: '專案助理',
+  generatingInsight: '正在為您生成洞察... AI 正在分析您的專案，這可能需要一點時間。',
+  chatPlaceholderGlobal: '提出關於您作品集的問題...',
+  chatPlaceholderRepo: '詢問關於 {repoName} 的問題...',
   sendMessage: '傳送訊息',
 };
 

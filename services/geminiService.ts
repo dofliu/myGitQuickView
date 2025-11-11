@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 import { GithubRepo, ChatMessage } from '../types';
 
@@ -65,8 +64,9 @@ Analyze this list to understand my technical skills, primary focus areas (e.g., 
 Based on your analysis, please provide:
 1.  A concise summary of my developer profile and probable career specialization.
 2.  A list of 3-5 concrete and actionable suggestions for future projects or technical skills to learn. These suggestions should complement my existing skill set and help my career growth.
+3.  A short, actionable to-do list (2-3 items) suggesting next steps for existing projects, especially those that haven't been updated recently.
 
-Format your response in Markdown with clear headings.
+Format your response in Markdown with clear headings for each section.
 
 Respond in ${language}.
 
@@ -86,45 +86,3 @@ ${JSON.stringify(repoSummaries, null, 2)}
         return "An error occurred while generating the AI-powered career insight.";
     }
 }
-
-export const getAiTasks = async (repos: GithubRepo[], chatHistory: ChatMessage[], language: string): Promise<string> => {
-    try {
-        const repoSummaries = repos.map(repo => ({
-            name: repo.name,
-            lastUpdate: repo.pushed_at,
-        })).slice(0, 20);
-
-        const prompt = `You are a friendly and proactive AI project manager assistant integrated into a GitHub dashboard. Your goal is to help the user stay productive and engaged with their projects.
-
-I will provide you with:
-1. A list of the user's most recent GitHub repositories, including their last update time.
-2. Our previous conversation history.
-
-Based on this information, please generate a short, actionable to-do list (2-4 items max) of what the user could work on next. Your suggestions should be:
-- **Proactive**: Identify projects that haven't been updated in a while and suggest a small next step.
-- **Contextual**: Refer back to topics from our previous conversation. If we discussed a new feature for a project, remind them about it.
-- **Encouraging**: Use a positive and motivational tone.
-- **Concise**: Keep each task item brief and to the point.
-
-Format your response as a Markdown list. If there is not enough information or no clear next steps, respond with a single encouraging sentence about reviewing their projects.
-
-Respond in ${language}.
-
-Here is the user's project data:
-${JSON.stringify(repoSummaries, null, 2)}
-
-Here is our previous conversation history:
-${JSON.stringify(chatHistory, null, 2)}
-`;
-
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
-            contents: prompt
-        });
-
-        return response.text.trim();
-    } catch (error) {
-        console.error("Error generating AI tasks:", error);
-        return "Could not generate task suggestions at this time.";
-    }
-};
