@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { GithubRepo, GithubUser, CommitInfo, ContributionData } from '../types';
 import SummaryStats from './SummaryStats';
@@ -93,7 +92,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <button 
                   onClick={() => setIsAiModalOpen(true)}
-                  className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105"
+                  disabled={!user}
+                  className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-all duration-300 transform hover:scale-105 disabled:bg-gray-600 disabled:cursor-not-allowed"
                 >
                   <SparklesIcon className="h-5 w-5" />
                   {t('aiInsight')}

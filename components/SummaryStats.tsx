@@ -20,7 +20,8 @@ const SummaryStats: React.FC<SummaryStatsProps> = ({ repos }) => {
   const publicRepos = totalRepos - privateRepos;
 
   // FIX: Explicitly type the accumulator for the reduce function to prevent type inference errors.
-  const languageCounts = repos.reduce<Record<string, number>>((acc, repo) => {
+  // By explicitly typing the `acc` parameter, we fix the type inference issue that caused all reported errors.
+  const languageCounts = repos.reduce((acc: Record<string, number>, repo) => {
     if (repo.language) {
       acc[repo.language] = (acc[repo.language] || 0) + 1;
     }
