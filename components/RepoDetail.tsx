@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { GithubRepo, CommitInfo } from '../types';
+import { useLocalization } from '../contexts/LocalizationContext';
 
 interface RepoDetailProps {
   repo: GithubRepo;
@@ -24,6 +25,7 @@ const LoadingSpinner: React.FC = () => (
 );
 
 const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, onBack, isLoading }) => {
+    const { t } = useLocalization();
     
     return (
         <div className="animate-fade-in space-y-6">
@@ -32,59 +34,59 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, onBack, isLoa
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
-                    Back to Projects
+                    {t('backToProjects')}
                 </button>
 
                 <div className="bg-gray-800/50 p-8 rounded-xl border border-gray-700">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 pb-6 border-b border-gray-700">
                         <div>
                             <h2 className="text-3xl font-bold text-white break-words">{repo.name}</h2>
-                            <p className="text-gray-400 mt-1 break-words">{repo.description || "No description."}</p>
+                            <p className="text-gray-400 mt-1 break-words">{repo.description || t('noDescription')}</p>
                         </div>
                         <a href={repo.html_url} target="_blank" rel="noopener noreferrer" 
                         className="mt-4 md:mt-0 flex-shrink-0 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md transition duration-200 text-sm">
-                            View on GitHub
+                            {t('viewOnGithub')}
                         </a>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <DetailItem label="Last Updated" value={new Date(repo.pushed_at).toLocaleString()} />
-                        <DetailItem label="Default Branch" value={repo.default_branch} />
-                        <DetailItem label="Language" value={repo.language || 'N/A'} />
+                        <DetailItem label={t('lastUpdated')} value={new Date(repo.pushed_at).toLocaleString()} />
+                        <DetailItem label={t('defaultBranch')} value={repo.default_branch} />
+                        <DetailItem label={t('language')} value={repo.language || 'N/A'} />
                     </div>
                 </div>
             </div>
 
             <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
-                <h3 className="text-lg font-semibold text-cyan-400 mb-4">Latest Update</h3>
+                <h3 className="text-lg font-semibold text-cyan-400 mb-4">{t('latestUpdate')}</h3>
                 {isLoading ? (
                     <div className="flex items-center justify-center h-24"><LoadingSpinner /></div>
                 ) : commitInfo ? (
                     <div className="space-y-4">
                         <div>
-                            <p className="text-sm text-gray-400">Commit Message</p>
+                            <p className="text-sm text-gray-400">{t('commitMessage')}</p>
                             <p className="text-md text-white bg-gray-900/60 p-3 rounded-md font-mono text-sm whitespace-pre-wrap break-words">{commitInfo.message}</p>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <DetailItem label="Update Time" value={new Date(commitInfo.date).toLocaleString()} />
-                            <DetailItem label="Probable Source (AI Analyzed)" value={
+                            <DetailItem label={t('updateTime')} value={new Date(commitInfo.date).toLocaleString()} />
+                            <DetailItem label={t('probableSource')} value={
                                 <span className="bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full font-medium">{commitInfo.source}</span>
                             } />
                         </div>
                     </div>
                 ) : (
-                    <p className="text-gray-400">No commit information available.</p>
+                    <p className="text-gray-400">{t('noCommitInfo')}</p>
                 )}
             </div>
 
             <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
-                <h3 className="text-lg font-semibold text-cyan-400 mb-4">AI-Generated Summary</h3>
+                <h3 className="text-lg font-semibold text-cyan-400 mb-4">{t('aiSummary')}</h3>
                  {isLoading ? (
                     <div className="flex items-center justify-center h-20"><LoadingSpinner /></div>
                 ) : commitInfo?.aiSummary ? (
                     <p className="text-gray-300 leading-relaxed">{commitInfo.aiSummary}</p>
                 ) : (
-                    <p className="text-gray-500">Could not generate AI summary.</p>
+                    <p className="text-gray-500">{t('noAiSummary')}</p>
                 )}
             </div>
         </div>

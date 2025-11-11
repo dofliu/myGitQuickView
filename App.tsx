@@ -1,26 +1,38 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { GithubRepo, GithubUser, CommitInfo } from './types';
-import { getAllRepos, getUser } from './services/githubService';
+import { GithubRepo, GithubUser, CommitInfo, ContributionData } from './types';
+import { getAllRepos, getUser, getLatestCommit, getContributionData } from './services/githubService';
+import { analyzeCommitMessage, summarizeProject } from './services/geminiService';
 import AuthScreen from './components/AuthScreen';
 import Dashboard from './components/Dashboard';
-import { analyzeCommitMessage, summarizeProject } from './services/geminiService';
-import { getLatestCommit } from './services/githubService';
+import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [pat, setPat] = useState<string | null>(null);
   const [user, setUser] = useState<GithubUser | null>(null);
   const [repos, setRepos] = useState<GithubRepo[]>([]);
+  const [contributionData, setContributionData] = useState<ContributionData | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<GithubRepo | null>(null);
-  const [commitInfo, setCommitInfo] = useState<CommitInfo | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isDetailLoading, setIsDetailLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const { language } = useLocalization();
+
+  const [commitCache, setCommitCache] = useState<{[repoId: number]: {[lang: string]: CommitInfo}}>(() => {
+    const savedCache = localStorage.getItem('commitCache');
+    return savedCache ? JSON.parse(savedCache) : {};
+  });
+
   const [pinnedRepoIds, setPinnedRepoIds] = useState<number[]>(() => {
     const savedPins = localStorage.getItem('pinnedRepos');
     return savedPins ? JSON.parse(savedPins) : [];
   });
+  
+  useEffect(() => {
+    localStorage.setItem('commitCache', JSON.stringify(commitCache));
+  }, [commitCache]);
 
   const togglePinRepo = (repoId: number) => {
     const newPinnedIds = pinnedRepoIds.includes(repoId)
@@ -34,8 +46,8 @@ const App: React.FC = () => {
     setPat(null);
     setUser(null);
     setRepos([]);
+    setContributionData(null);
     setSelectedRepo(null);
-    setCommitInfo(null);
     setError(null);
   };
 
@@ -45,9 +57,13 @@ const App: React.FC = () => {
     try {
       const userData = await getUser(token);
       setUser(userData);
-      const repoData = await getAllRepos(token);
+      const [repoData, contribData] = await Promise.all([
+        getAllRepos(token),
+        getContributionData(token, userData.login)
+      ]);
       repoData.sort((a, b) => new Date(b.pushed_at).getTime() - new Date(a.pushed_at).getTime());
       setRepos(repoData);
+      setContributionData(contribData);
     } catch (err) {
       setError('Failed to fetch data. Please check your Personal Access Token and permissions.');
       handleSignOut(); // Reset state on error
@@ -65,30 +81,28 @@ const App: React.FC = () => {
     if (pat) {
       fetchData(pat);
       setSelectedRepo(null);
-      setCommitInfo(null);
     }
   };
 
   useEffect(() => {
     const fetchDetails = async () => {
       if (selectedRepo && pat) {
+        const cachedData = commitCache[selectedRepo.id]?.[language];
+        if (cachedData) {
+          setIsDetailLoading(false);
+          return;
+        }
+
         setIsDetailLoading(true);
-        setCommitInfo(null); // Clear previous info
         try {
           const latestCommit = await getLatestCommit(pat, selectedRepo.owner.login, selectedRepo.name);
           
-          let commitData = {
-              message: 'No commits found for this repository.',
-              date: new Date().toISOString(),
-              source: 'Unknown',
-              aiSummary: 'Could not generate summary as no commit information was found.',
-          };
+          let commitData: CommitInfo;
 
           if (latestCommit) {
-            // Fetch source and summary in parallel
             const [source, summary] = await Promise.all([
-               analyzeCommitMessage(latestCommit.commit.message),
-               summarizeProject(selectedRepo.name, selectedRepo.description || '', latestCommit.commit.message)
+               analyzeCommitMessage(latestCommit.commit.message, language),
+               summarizeProject(selectedRepo.name, selectedRepo.description || '', latestCommit.commit.message, language)
             ]);
 
             commitData = {
@@ -97,45 +111,72 @@ const App: React.FC = () => {
               source: source,
               aiSummary: summary,
             };
+          } else {
+             commitData = {
+              message: 'No commits found for this repository.',
+              date: new Date().toISOString(),
+              source: 'Unknown',
+              aiSummary: 'Could not generate summary as no commit information was found.',
+            };
           }
-          setCommitInfo(commitData);
+          
+          setCommitCache(prevCache => ({
+              ...prevCache,
+              [selectedRepo.id]: {
+                  ...prevCache[selectedRepo.id],
+                  [language]: commitData
+              }
+          }));
 
         } catch (err) {
           console.error("Failed to fetch commit details:", err);
-          setCommitInfo({
+           const errorCommitData: CommitInfo = {
             message: 'Could not fetch latest commit information.',
             date: new Date().toISOString(),
             source: 'Unknown',
             aiSummary: 'Analysis failed due to an error fetching commit data.'
-          });
+          };
+           setCommitCache(prevCache => ({
+              ...prevCache,
+              [selectedRepo.id]: {
+                  ...prevCache[selectedRepo.id],
+                  [language]: errorCommitData
+              }
+          }));
         } finally {
           setIsDetailLoading(false);
         }
       }
     };
     fetchDetails();
-  }, [selectedRepo, pat]);
+  }, [selectedRepo, pat, language]);
 
 
   if (!pat || error) {
     return <AuthScreen onSetPat={handleSetPat} error={error} isLoading={isLoading} />;
   }
 
-  const sortedRepos = [...repos].sort((a, b) => {
+  const filteredRepos = repos.filter(repo =>
+    repo.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const sortedRepos = [...filteredRepos].sort((a, b) => {
     const aIsPinned = pinnedRepoIds.includes(a.id);
     const bIsPinned = pinnedRepoIds.includes(b.id);
     if (aIsPinned && !bIsPinned) return -1;
     if (!aIsPinned && bIsPinned) return 1;
     return new Date(b.pushed_at).getTime() - new Date(a.pushed_at).getTime();
   });
-
+  
+  const currentCommitInfo = selectedRepo ? commitCache[selectedRepo.id]?.[language] : null;
 
   return (
     <Dashboard
       user={user}
       repos={sortedRepos}
+      contributionData={contributionData}
       selectedRepo={selectedRepo}
-      commitInfo={commitInfo}
+      commitInfo={currentCommitInfo}
       onSelectRepo={setSelectedRepo}
       onRefresh={handleRefresh}
       onSignOut={handleSignOut}
@@ -143,8 +184,16 @@ const App: React.FC = () => {
       isDetailLoading={isDetailLoading}
       pinnedRepoIds={pinnedRepoIds}
       onTogglePin={togglePinRepo}
+      searchTerm={searchTerm}
+      onSearchChange={setSearchTerm}
     />
   );
 };
+
+const App: React.FC = () => (
+  <LocalizationProvider>
+    <AppContent />
+  </LocalizationProvider>
+)
 
 export default App;

@@ -36,3 +36,21 @@ export interface CommitInfo {
     source: string;
     aiSummary?: string;
 }
+
+export interface ContributionDay {
+  contributionCount: number;
+  date: string;
+  weekday: number;
+}
+
+export interface ContributionData {
+  totalContributions: number;
+  weeks: {
+    contributionDays: ContributionDay[];
+  }[];
+}
+
+export interface ChatMessage {
+  role: 'user' | 'model';
+  text: string;
+}
