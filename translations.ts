@@ -83,6 +83,16 @@ const en: Translation = {
   chatPlaceholderGlobal: 'Ask a follow-up about your portfolio...',
   chatPlaceholderRepo: 'Ask about {repoName}...',
   sendMessage: 'Send Message',
+  
+  // AI Task List
+  aiTaskList: 'AI Task List',
+  chat: 'Chat',
+  tasks: 'Tasks',
+  generateTasks: 'Generate Tasks',
+  generatingTasks: 'AI is generating tasks...',
+  tasksForRepo: 'Get AI-suggested next steps for {repoName}.',
+  noTasksGenerated: 'No tasks generated yet.',
+  completed: 'Completed',
 };
 
 const zhTW: Translation = {
@@ -167,6 +177,16 @@ const zhTW: Translation = {
   chatPlaceholderGlobal: '提出關於您作品集的問題...',
   chatPlaceholderRepo: '詢問關於 {repoName} 的問題...',
   sendMessage: '傳送訊息',
+
+  // AI Task List
+  aiTaskList: 'AI 任務清單',
+  chat: '聊天',
+  tasks: '任務',
+  generateTasks: '生成任務',
+  generatingTasks: 'AI 正在生成任務...',
+  tasksForRepo: '為 {repoName} 獲取 AI 建議的後續步驟。',
+  noTasksGenerated: '尚未生成任何任務。',
+  completed: '已完成',
 };
 
 export const translations = {

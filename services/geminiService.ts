@@ -1,5 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
-import { GithubRepo, ChatMessage } from '../types';
+import { GoogleGenAI, Type } from "@google/genai";
+import { GithubRepo, ChatMessage, TaskItem } from '../types';
 
 // FIX: Aligned with @google/genai coding guidelines.
 // The API key is sourced directly from process.env.API_KEY, and the client is initialized once.
@@ -86,3 +86,49 @@ ${JSON.stringify(repoSummaries, null, 2)}
         return "An error occurred while generating the AI-powered career insight.";
     }
 }
+
+export const generateTaskList = async (repo: GithubRepo, latestCommit: string, language: string): Promise<TaskItem[]> => {
+    try {
+        const prompt = `Based on the following GitHub project details, generate a concise to-do list of 3-5 actionable next steps to improve it. Focus on improving documentation, adding tests, refactoring specific parts, or suggesting a new feature. Respond in ${language}.
+
+Project Name: ${repo.name}
+Description: ${repo.description || 'N/A'}
+Primary Language: ${repo.language || 'N/A'}
+Latest Commit: "${latestCommit}"`;
+        
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            text: {
+                                type: Type.STRING,
+                                description: 'The suggested task or to-do item.'
+                            },
+                        },
+                        required: ["text"],
+                    },
+                },
+            },
+        });
+
+        const jsonStr = response.text.trim();
+        if (!jsonStr) {
+            return [];
+        }
+        
+        const parsedTasks: {text: string}[] = JSON.parse(jsonStr);
+        return parsedTasks.map(task => ({ ...task, completed: false }));
+
+    } catch (error) {
+        console.error("Error generating task list with Gemini:", error);
+        return [
+            { text: "Failed to generate AI-powered tasks. Check console for details.", completed: false },
+        ];
+    }
+};

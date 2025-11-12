@@ -70,3 +70,8 @@ export interface BranchDetails {
     date: string;
   }
 }
+
+export interface TaskItem {
+  text: string;
+  completed: boolean;
+}
