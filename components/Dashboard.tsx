@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails } from '../types';
 import SummaryStats from './SummaryStats';
 import RepoList from './RepoList';
@@ -9,6 +9,7 @@ import ContributionGraph from './ContributionGraph';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { SearchIcon } from './icons/SearchIcon';
 import AiChatPanel from './AiChatPanel';
+import { SparklesIcon } from './icons/SparklesIcon';
 
 interface DashboardProps {
   user: GithubUser | null;
@@ -46,6 +47,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   onSearchChange,
 }) => {
   const { t } = useLocalization();
+  const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
 
   return (
     <div className="h-screen flex flex-col bg-gray-900 text-gray-200 font-sans">
@@ -96,7 +98,8 @@ const Dashboard: React.FC<DashboardProps> = ({
             </>
           )}
         </div>
-        <aside className="w-[450px] flex-shrink-0 bg-gray-900/50 border-l border-gray-800 flex flex-col">
+        {/* Desktop AI Panel */}
+        <aside className="w-[450px] flex-shrink-0 bg-gray-900/50 border-l border-gray-800 flex-col hidden lg:flex">
             <AiChatPanel
                 selectedRepo={selectedRepo}
                 repos={repos}
@@ -104,6 +107,35 @@ const Dashboard: React.FC<DashboardProps> = ({
                 commitInfo={commitInfo}
             />
         </aside>
+
+        {/* Mobile AI Panel Toggle Button */}
+        <div className="lg:hidden fixed bottom-6 right-6 z-20">
+            <button
+                onClick={() => setIsAiPanelOpen(true)}
+                className="bg-purple-600 hover:bg-purple-700 text-white rounded-full p-4 shadow-lg transition-transform transform hover:scale-110"
+                aria-label={t('portfolioAdvisor')}
+            >
+                <SparklesIcon className="h-6 w-6" />
+            </button>
+        </div>
+
+        {/* Mobile AI Panel Modal */}
+        {isAiPanelOpen && (
+            <div className="lg:hidden fixed inset-0 bg-black/60 z-30 backdrop-blur-sm" onClick={() => setIsAiPanelOpen(false)}>
+                <div 
+                    className="fixed inset-y-0 right-0 w-full max-w-md bg-gray-900 shadow-xl flex flex-col border-l border-gray-800 animate-slide-in"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <AiChatPanel
+                        selectedRepo={selectedRepo}
+                        repos={repos}
+                        user={user}
+                        commitInfo={commitInfo}
+                        onClose={() => setIsAiPanelOpen(false)}
+                    />
+                </div>
+            </div>
+        )}
       </main>
     </div>
   );

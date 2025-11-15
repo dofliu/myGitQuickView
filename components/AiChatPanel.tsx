@@ -8,12 +8,14 @@ import { ai } from '../services/geminiService';
 import { Chat } from '@google/genai';
 import { ChecklistIcon } from './icons/ChecklistIcon';
 import AiTaskList from './AiTaskList';
+import { CloseIcon } from './icons/CloseIcon';
 
 interface AiChatPanelProps {
   selectedRepo: GithubRepo | null;
   repos: GithubRepo[];
   user: GithubUser | null;
   commitInfo: CommitInfo | null;
+  onClose?: () => void;
 }
 
 const LoadingState: React.FC = () => {
@@ -28,7 +30,7 @@ const LoadingState: React.FC = () => {
 
 type PanelView = 'chat' | 'tasks';
 
-const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, commitInfo }) => {
+const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, commitInfo, onClose }) => {
   const { t, language } = useLocalization();
   const [isFetchingInitial, setIsFetchingInitial] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -235,7 +237,15 @@ const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, co
                 {view === 'tasks' ? <ChecklistIcon className="h-6 w-6 text-purple-400"/> : <SparklesIcon className="h-6 w-6 text-purple-400" />}
                 <h2 className="text-xl font-bold text-white truncate">{title} {selectedRepo && <span className="text-base font-medium text-gray-400">- {selectedRepo.name}</span>}</h2>
             </div>
-            {selectedRepo && (
+             {onClose ? (
+              <button
+                onClick={onClose}
+                className="p-1 rounded-full text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"
+                aria-label="Close"
+              >
+                  <CloseIcon className="h-6 w-6" />
+              </button>
+            ) : selectedRepo && (
                 <div className="flex items-center bg-gray-800 rounded-full p-1 text-sm">
                     <button onClick={() => setView('chat')} className={`px-3 py-1 rounded-full transition-colors ${view === 'chat' ? 'bg-cyan-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>{t('chat')}</button>
                     <button onClick={() => setView('tasks')} className={`px-3 py-1 rounded-full transition-colors ${view === 'tasks' ? 'bg-cyan-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>{t('tasks')}</button>
