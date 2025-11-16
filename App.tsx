@@ -16,6 +16,8 @@ const AppContent: React.FC = () => {
   const [isDetailLoading, setIsDetailLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [languageFilter, setLanguageFilter] = useState<string>('all');
+  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'private'>('all');
 
   const { language } = useLocalization();
 
@@ -210,9 +212,12 @@ const AppContent: React.FC = () => {
     return <AuthScreen onSetPat={handleSetPat} error={error} isLoading={isLoading} />;
   }
 
-  const filteredRepos = repos.filter(repo =>
-    repo.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRepos = repos.filter(repo => {
+    const matchesSearch = repo.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesLanguage = languageFilter === 'all' || repo.language === languageFilter;
+    const matchesVisibility = visibilityFilter === 'all' || (visibilityFilter === 'public' && !repo.private) || (visibilityFilter === 'private' && repo.private);
+    return matchesSearch && matchesLanguage && matchesVisibility;
+  });
 
   const sortedRepos = [...filteredRepos].sort((a, b) => {
     const aIsPinned = pinnedRepoIds.includes(a.id);
@@ -222,6 +227,16 @@ const AppContent: React.FC = () => {
     return new Date(b.pushed_at).getTime() - new Date(a.pushed_at).getTime();
   });
   
+  const allLanguages = React.useMemo(() => {
+    const languages = new Set<string>();
+    repos.forEach(repo => {
+      if (repo.language) {
+        languages.add(repo.language);
+      }
+    });
+    return Array.from(languages).sort();
+  }, [repos]);
+
   const currentCommitInfo = selectedRepo ? commitCache[selectedRepo.id]?.[language] : null;
   const currentBranches = selectedRepo ? branchCache[selectedRepo.id] : null;
   const currentGoals = selectedRepo ? goalCache[selectedRepo.id] : null;
@@ -230,6 +245,7 @@ const AppContent: React.FC = () => {
     <Dashboard
       user={user}
       repos={sortedRepos}
+      allRepos={repos}
       contributionData={contributionData}
       selectedRepo={selectedRepo}
       commitInfo={currentCommitInfo}
@@ -244,6 +260,11 @@ const AppContent: React.FC = () => {
       onTogglePin={togglePinRepo}
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
+      languageFilter={languageFilter}
+      onLanguageFilterChange={setLanguageFilter}
+      visibilityFilter={visibilityFilter}
+      onVisibilityFilterChange={setVisibilityFilter}
+      allLanguages={allLanguages}
       isGeneratingGoals={isGeneratingGoals}
       onGenerateGoals={handleGenerateGoals}
       onToggleGoal={handleToggleGoal}

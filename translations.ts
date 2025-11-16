@@ -37,6 +37,10 @@ const en: Translation = {
   projects: 'Projects',
   welcome: 'Welcome',
   searchProjects: 'Search projects...',
+  allLanguages: 'All Languages',
+  all: 'All',
+  public: 'Public',
+  private: 'Private',
   
   // Contribution Graph
   contributionsInLast3Months: '{count} contributions in the last 3 months',
@@ -133,6 +137,10 @@ const zhTW: Translation = {
   projects: '專案',
   welcome: '歡迎',
   searchProjects: '搜尋專案...',
+  allLanguages: '所有語言',
+  all: '全部',
+  public: '公開',
+  private: '私有',
   
   // Contribution Graph
   contributionsInLast3Months: '最近三個月有 {count} 次貢獻',
