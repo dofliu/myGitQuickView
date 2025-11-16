@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails, GoalItem } from './types';
+import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails } from './types';
 import { getAllRepos, getUser, getLatestCommit, getContributionData, getRepoBranches } from './services/githubService';
-import { analyzeCommitMessage, summarizeProject, generateProjectGoals } from './services/geminiService';
+import { analyzeCommitMessage, summarizeProject } from './services/geminiService';
 import AuthScreen from './components/AuthScreen';
 import Dashboard from './components/Dashboard';
 import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
@@ -16,8 +16,6 @@ const AppContent: React.FC = () => {
   const [isDetailLoading, setIsDetailLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [languageFilter, setLanguageFilter] = useState<string>('all');
-  const [visibilityFilter, setVisibilityFilter] = useState<'all' | 'public' | 'private'>('all');
 
   const { language } = useLocalization();
 
@@ -28,12 +26,6 @@ const AppContent: React.FC = () => {
   
   const [branchCache, setBranchCache] = useState<{[repoId: number]: BranchDetails[]}>({});
 
-  const [goalCache, setGoalCache] = useState<{[repoId: number]: GoalItem[]}> (() => {
-    const savedCache = localStorage.getItem('goalCache');
-    return savedCache ? JSON.parse(savedCache) : {};
-  });
-  const [isGeneratingGoals, setIsGeneratingGoals] = useState(false);
-
   const [pinnedRepoIds, setPinnedRepoIds] = useState<number[]>(() => {
     const savedPins = localStorage.getItem('pinnedRepos');
     return savedPins ? JSON.parse(savedPins) : [];
@@ -42,11 +34,6 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('commitCache', JSON.stringify(commitCache));
   }, [commitCache]);
-
-  useEffect(() => {
-    localStorage.setItem('goalCache', JSON.stringify(goalCache));
-  }, [goalCache]);
-
 
   const togglePinRepo = (repoId: number) => {
     const newPinnedIds = pinnedRepoIds.includes(repoId)
@@ -97,30 +84,6 @@ const AppContent: React.FC = () => {
       setSelectedRepo(null);
     }
   };
-
-  const handleGenerateGoals = async () => {
-    if (!selectedRepo) return;
-    setIsGeneratingGoals(true);
-    try {
-        const newGoals = await generateProjectGoals(selectedRepo, language);
-        setGoalCache(prev => ({ ...prev, [selectedRepo.id]: newGoals }));
-    } catch (error) {
-        console.error("Failed to generate goals", error);
-    } finally {
-        setIsGeneratingGoals(false);
-    }
-  };
-
-  const handleToggleGoal = (index: number) => {
-    if (!selectedRepo) return;
-    setGoalCache(prev => {
-        const currentGoals = prev[selectedRepo!.id] || [];
-        const newGoals = [...currentGoals];
-        newGoals[index].completed = !newGoals[index].completed;
-        return { ...prev, [selectedRepo!.id]: newGoals };
-    });
-  };
-
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -212,12 +175,9 @@ const AppContent: React.FC = () => {
     return <AuthScreen onSetPat={handleSetPat} error={error} isLoading={isLoading} />;
   }
 
-  const filteredRepos = repos.filter(repo => {
-    const matchesSearch = repo.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLanguage = languageFilter === 'all' || repo.language === languageFilter;
-    const matchesVisibility = visibilityFilter === 'all' || (visibilityFilter === 'public' && !repo.private) || (visibilityFilter === 'private' && repo.private);
-    return matchesSearch && matchesLanguage && matchesVisibility;
-  });
+  const filteredRepos = repos.filter(repo =>
+    repo.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const sortedRepos = [...filteredRepos].sort((a, b) => {
     const aIsPinned = pinnedRepoIds.includes(a.id);
@@ -227,30 +187,17 @@ const AppContent: React.FC = () => {
     return new Date(b.pushed_at).getTime() - new Date(a.pushed_at).getTime();
   });
   
-  const allLanguages = React.useMemo(() => {
-    const languages = new Set<string>();
-    repos.forEach(repo => {
-      if (repo.language) {
-        languages.add(repo.language);
-      }
-    });
-    return Array.from(languages).sort();
-  }, [repos]);
-
   const currentCommitInfo = selectedRepo ? commitCache[selectedRepo.id]?.[language] : null;
   const currentBranches = selectedRepo ? branchCache[selectedRepo.id] : null;
-  const currentGoals = selectedRepo ? goalCache[selectedRepo.id] : null;
 
   return (
     <Dashboard
       user={user}
       repos={sortedRepos}
-      allRepos={repos}
       contributionData={contributionData}
       selectedRepo={selectedRepo}
       commitInfo={currentCommitInfo}
       branches={currentBranches}
-      goals={currentGoals}
       onSelectRepo={setSelectedRepo}
       onRefresh={handleRefresh}
       onSignOut={handleSignOut}
@@ -260,14 +207,6 @@ const AppContent: React.FC = () => {
       onTogglePin={togglePinRepo}
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
-      languageFilter={languageFilter}
-      onLanguageFilterChange={setLanguageFilter}
-      visibilityFilter={visibilityFilter}
-      onVisibilityFilterChange={setVisibilityFilter}
-      allLanguages={allLanguages}
-      isGeneratingGoals={isGeneratingGoals}
-      onGenerateGoals={handleGenerateGoals}
-      onToggleGoal={handleToggleGoal}
     />
   );
 };

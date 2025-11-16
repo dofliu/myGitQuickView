@@ -1,18 +1,13 @@
 import React from 'react';
-import { GithubRepo, CommitInfo, BranchDetails, GoalItem } from '../types';
+import { GithubRepo, CommitInfo, BranchDetails } from '../types';
 import { useLocalization } from '../contexts/LocalizationContext';
-import { SparklesIcon } from './icons/SparklesIcon';
 
 interface RepoDetailProps {
   repo: GithubRepo;
   commitInfo: CommitInfo | null;
   branches: BranchDetails[] | null;
-  goals: GoalItem[] | null;
   onBack: () => void;
   isLoading: boolean;
-  isGeneratingGoals: boolean;
-  onGenerateGoals: () => void;
-  onToggleGoal: (index: number) => void;
 }
 
 const DetailItem: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
@@ -29,7 +24,7 @@ const LoadingSpinner: React.FC = () => (
     </svg>
 );
 
-const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, goals, onBack, isLoading, isGeneratingGoals, onGenerateGoals, onToggleGoal }) => {
+const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, onBack, isLoading }) => {
     const { t } = useLocalization();
     
     return (
@@ -115,47 +110,6 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, goa
                     <p className="text-gray-300 leading-relaxed">{commitInfo.aiSummary}</p>
                 ) : (
                     <p className="text-gray-500">{t('noAiSummary')}</p>
-                )}
-            </div>
-            
-            <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
-                <h3 className="text-lg font-semibold text-cyan-400 mb-4">{t('aiGoals')}</h3>
-                {isGeneratingGoals ? (
-                     <div className="flex items-center justify-center h-24"><LoadingSpinner /></div>
-                ) : goals && goals.length > 0 ? (
-                    <ul className="space-y-4">
-                        {goals.map((goal, index) => (
-                            <li key={index} className="flex items-start bg-gray-900/50 p-4 rounded-lg transition-colors hover:bg-gray-900">
-                                <input
-                                    type="checkbox"
-                                    id={`goal-${index}`}
-                                    checked={goal.completed}
-                                    onChange={() => onToggleGoal(index)}
-                                    className="h-5 w-5 rounded border-gray-600 text-cyan-500 bg-gray-800 focus:ring-cyan-600 cursor-pointer mt-1 flex-shrink-0"
-                                />
-                                <div className="ml-4">
-                                    <label htmlFor={`goal-${index}`} className={`font-semibold ${goal.completed ? 'text-gray-500 line-through' : 'text-white'} cursor-pointer`}>
-                                        {goal.title}
-                                    </label>
-                                    <p className={`text-sm ${goal.completed ? 'text-gray-600' : 'text-gray-400'}`}>
-                                        {goal.description}
-                                    </p>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                ) : (
-                    <div className="text-center py-4">
-                        <p className="text-gray-400 mb-4">{t('noGoalsGenerated')}</p>
-                        <button
-                            onClick={onGenerateGoals}
-                            disabled={isGeneratingGoals}
-                            className="flex items-center gap-2 mx-auto bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out"
-                        >
-                            <SparklesIcon className="h-5 w-5"/>
-                            {t('generateGoals')}
-                        </button>
-                    </div>
                 )}
             </div>
         </div>

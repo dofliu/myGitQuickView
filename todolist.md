@@ -5,7 +5,7 @@ This document tracks planned tasks, features, and improvements for the GitHub Pr
 ## Features
 
 -   [ ] **Search & Filter**: Implement a search bar to filter repositories by name.
--   [x] **Advanced Filtering**: Add options to filter by language, and public/private status.
+-   [ ] **Advanced Filtering**: Add options to filter by language, and public/private status.
 -   [ ] **Data Visualization**: Use a library like Chart.js to create a visual pie or bar chart for language distribution.
 -   [ ] **Commit History**: Create a view to show the last 5-10 commits for a selected repository, not just the latest one.
 -   [ ] **Pagination**: Add pagination for the repository grid for users with a large number of projects.
@@ -32,7 +32,7 @@ This document tracks planned tasks, features, and improvements for the GitHub Pr
 ## 功能開發
 
 -   [ ] **搜尋與篩選**: 實作一個搜尋框，可依專案名稱過濾。
--   [x] **進階篩選**: 新增依程式語言、公開/私有狀態進行篩選的選項。
+-   [ ] **進階篩選**: 新增依程式語言、公開/私有狀態進行篩選的選項。
 -   [ ] **數據可視化**: 使用 Chart.js 之類的圖表庫為語言分佈創建圓餅圖或長條圖。
 -   [ ] **提交歷史**: 為選定的專案創建一個視圖，顯示最近 5-10 次的提交紀錄，而不僅僅是最新的一次。
 -   [ ] **分頁功能**: 為擁有大量專案的使用者在專案網格中添加分頁功能。

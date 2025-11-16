@@ -75,9 +75,3 @@ export interface TaskItem {
   text: string;
   completed: boolean;
 }
-
-export interface GoalItem {
-  title: string;
-  description: string;
-  completed: boolean;
-}
