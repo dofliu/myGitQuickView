@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { GithubRepo, ChatMessage, TaskItem } from '../types';
+import { GithubRepo, ChatMessage, TaskItem, GoalItem } from '../types';
 
 // FIX: Aligned with @google/genai coding guidelines.
 // The API key is sourced directly from process.env.API_KEY, and the client is initialized once.
@@ -129,6 +129,55 @@ Latest Commit: "${latestCommit}"`;
         console.error("Error generating task list with Gemini:", error);
         return [
             { text: "Failed to generate AI-powered tasks. Check console for details.", completed: false },
+        ];
+    }
+};
+
+export const generateProjectGoals = async (repo: GithubRepo, language: string): Promise<GoalItem[]> => {
+    try {
+        const prompt = `You are an expert project manager and product strategist. Based on the following GitHub project, generate 3 high-level, ambitious but achievable goals to guide its future development. For each goal, provide a concise title and a one-sentence description. Respond in ${language}.
+
+Project Name: ${repo.name}
+Description: ${repo.description || 'N/A'}
+Primary Language: ${repo.language || 'N/A'}`;
+        
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            title: {
+                                type: Type.STRING,
+                                description: 'The concise title of the goal.'
+                            },
+                            description: {
+                                type: Type.STRING,
+                                description: 'A one-sentence description of the goal.'
+                            }
+                        },
+                        required: ["title", "description"],
+                    },
+                },
+            },
+        });
+
+        const jsonStr = response.text.trim();
+        if (!jsonStr) {
+            return [];
+        }
+        
+        const parsedGoals: {title: string, description: string}[] = JSON.parse(jsonStr);
+        return parsedGoals.map(goal => ({ ...goal, completed: false }));
+
+    } catch (error) {
+        console.error("Error generating project goals with Gemini:", error);
+        return [
+            { title: "Failed to generate AI-powered goals.", description: "Check console for details.", completed: false },
         ];
     }
 };

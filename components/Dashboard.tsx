@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails } from '../types';
+import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails, GoalItem } from '../types';
 import SummaryStats from './SummaryStats';
 import RepoList from './RepoList';
 import RepoGrid from './RepoGrid';
@@ -18,6 +18,7 @@ interface DashboardProps {
   selectedRepo: GithubRepo | null;
   commitInfo: CommitInfo | null;
   branches: BranchDetails[] | null;
+  goals: GoalItem[] | null;
   onSelectRepo: (repo: GithubRepo | null) => void;
   onRefresh: () => void;
   onSignOut: () => void;
@@ -27,6 +28,9 @@ interface DashboardProps {
   onTogglePin: (repoId: number) => void;
   searchTerm: string;
   onSearchChange: (term: string) => void;
+  isGeneratingGoals: boolean;
+  onGenerateGoals: () => void;
+  onToggleGoal: (index: number) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({
@@ -36,6 +40,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   selectedRepo,
   commitInfo,
   branches,
+  goals,
   onSelectRepo,
   onRefresh,
   onSignOut,
@@ -45,6 +50,9 @@ const Dashboard: React.FC<DashboardProps> = ({
   onTogglePin,
   searchTerm,
   onSearchChange,
+  isGeneratingGoals,
+  onGenerateGoals,
+  onToggleGoal,
 }) => {
   const { t } = useLocalization();
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
@@ -65,8 +73,12 @@ const Dashboard: React.FC<DashboardProps> = ({
               repo={selectedRepo} 
               commitInfo={commitInfo}
               branches={branches}
+              goals={goals}
               onBack={() => onSelectRepo(null)}
-              isLoading={isDetailLoading} 
+              isLoading={isDetailLoading}
+              isGeneratingGoals={isGeneratingGoals}
+              onGenerateGoals={onGenerateGoals}
+              onToggleGoal={onToggleGoal}
             />
           ) : (
             <>

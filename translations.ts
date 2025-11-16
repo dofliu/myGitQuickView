@@ -75,6 +75,9 @@ const en: Translation = {
   noAiSummary: 'Could not generate AI summary.',
   activeBranches: 'Active Branches',
   noOtherBranches: 'No other active branches found.',
+  aiGoals: 'AI-Generated Goals',
+  generateGoals: 'Generate Goals',
+  noGoalsGenerated: 'Set a high-level vision for your project with AI.',
 
   // AI Chat Panel
   portfolioAdvisor: 'Portfolio Advisor',
@@ -169,6 +172,9 @@ const zhTW: Translation = {
   noAiSummary: '無法生成 AI 摘要。',
   activeBranches: '進行中的分支',
   noOtherBranches: '找不到其他進行中的分支。',
+  aiGoals: 'AI 生成的目標',
+  generateGoals: '生成目標',
+  noGoalsGenerated: '讓 AI 為您的專案設定宏觀願景。',
   
   // AI Chat Panel
   portfolioAdvisor: '組合顧問',

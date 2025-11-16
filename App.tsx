@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails } from './types';
+import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails, GoalItem } from './types';
 import { getAllRepos, getUser, getLatestCommit, getContributionData, getRepoBranches } from './services/githubService';
-import { analyzeCommitMessage, summarizeProject } from './services/geminiService';
+import { analyzeCommitMessage, summarizeProject, generateProjectGoals } from './services/geminiService';
 import AuthScreen from './components/AuthScreen';
 import Dashboard from './components/Dashboard';
 import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
@@ -26,6 +26,12 @@ const AppContent: React.FC = () => {
   
   const [branchCache, setBranchCache] = useState<{[repoId: number]: BranchDetails[]}>({});
 
+  const [goalCache, setGoalCache] = useState<{[repoId: number]: GoalItem[]}> (() => {
+    const savedCache = localStorage.getItem('goalCache');
+    return savedCache ? JSON.parse(savedCache) : {};
+  });
+  const [isGeneratingGoals, setIsGeneratingGoals] = useState(false);
+
   const [pinnedRepoIds, setPinnedRepoIds] = useState<number[]>(() => {
     const savedPins = localStorage.getItem('pinnedRepos');
     return savedPins ? JSON.parse(savedPins) : [];
@@ -34,6 +40,11 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('commitCache', JSON.stringify(commitCache));
   }, [commitCache]);
+
+  useEffect(() => {
+    localStorage.setItem('goalCache', JSON.stringify(goalCache));
+  }, [goalCache]);
+
 
   const togglePinRepo = (repoId: number) => {
     const newPinnedIds = pinnedRepoIds.includes(repoId)
@@ -84,6 +95,30 @@ const AppContent: React.FC = () => {
       setSelectedRepo(null);
     }
   };
+
+  const handleGenerateGoals = async () => {
+    if (!selectedRepo) return;
+    setIsGeneratingGoals(true);
+    try {
+        const newGoals = await generateProjectGoals(selectedRepo, language);
+        setGoalCache(prev => ({ ...prev, [selectedRepo.id]: newGoals }));
+    } catch (error) {
+        console.error("Failed to generate goals", error);
+    } finally {
+        setIsGeneratingGoals(false);
+    }
+  };
+
+  const handleToggleGoal = (index: number) => {
+    if (!selectedRepo) return;
+    setGoalCache(prev => {
+        const currentGoals = prev[selectedRepo!.id] || [];
+        const newGoals = [...currentGoals];
+        newGoals[index].completed = !newGoals[index].completed;
+        return { ...prev, [selectedRepo!.id]: newGoals };
+    });
+  };
+
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -189,6 +224,7 @@ const AppContent: React.FC = () => {
   
   const currentCommitInfo = selectedRepo ? commitCache[selectedRepo.id]?.[language] : null;
   const currentBranches = selectedRepo ? branchCache[selectedRepo.id] : null;
+  const currentGoals = selectedRepo ? goalCache[selectedRepo.id] : null;
 
   return (
     <Dashboard
@@ -198,6 +234,7 @@ const AppContent: React.FC = () => {
       selectedRepo={selectedRepo}
       commitInfo={currentCommitInfo}
       branches={currentBranches}
+      goals={currentGoals}
       onSelectRepo={setSelectedRepo}
       onRefresh={handleRefresh}
       onSignOut={handleSignOut}
@@ -207,6 +244,9 @@ const AppContent: React.FC = () => {
       onTogglePin={togglePinRepo}
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
+      isGeneratingGoals={isGeneratingGoals}
+      onGenerateGoals={handleGenerateGoals}
+      onToggleGoal={handleToggleGoal}
     />
   );
 };
