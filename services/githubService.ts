@@ -1,3 +1,4 @@
+
 import { GithubUser, GithubRepo, GithubCommit, ContributionData, GithubBranch } from '../types';
 
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -65,6 +66,26 @@ export const getRepoBranches = async (token: string, owner: string, repo: string
         return [];
     }
 }
+
+export const getReadme = async (token: string, owner: string, repo: string): Promise<string | null> => {
+    try {
+        const response = await fetch(`${GITHUB_API_BASE}/repos/${owner}/${repo}/readme`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Accept': 'application/vnd.github.raw', // Request raw content
+                'X-GitHub-Api-Version': '2022-11-28',
+            },
+        });
+        
+        if (!response.ok) {
+            return null;
+        }
+        return await response.text();
+    } catch (error) {
+        console.error(`Could not fetch README for ${owner}/${repo}:`, error);
+        return null;
+    }
+};
 
 export const getContributionData = async (token: string, username: string): Promise<ContributionData> => {
   const to = new Date();

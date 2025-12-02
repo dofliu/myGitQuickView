@@ -1,3 +1,4 @@
+
 export interface GithubUser {
   login: string;
   name: string;
@@ -34,6 +35,7 @@ export interface CommitInfo {
     date: string;
     source: string;
     aiSummary?: string;
+    readme?: string | null;
 }
 
 export interface ContributionDay {
@@ -75,3 +77,5 @@ export interface TaskItem {
   text: string;
   completed: boolean;
 }
+
+export type FilterType = 'all' | 'public' | 'private';

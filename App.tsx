@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails } from './types';
-import { getAllRepos, getUser, getLatestCommit, getContributionData, getRepoBranches } from './services/githubService';
+import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails, FilterType } from './types';
+import { getAllRepos, getUser, getLatestCommit, getContributionData, getRepoBranches, getReadme } from './services/githubService';
 import { analyzeCommitMessage, summarizeProject } from './services/geminiService';
 import AuthScreen from './components/AuthScreen';
 import Dashboard from './components/Dashboard';
@@ -16,6 +17,7 @@ const AppContent: React.FC = () => {
   const [isDetailLoading, setIsDetailLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filterType, setFilterType] = useState<FilterType>('all');
 
   const { language } = useLocalization();
 
@@ -50,6 +52,7 @@ const AppContent: React.FC = () => {
     setContributionData(null);
     setSelectedRepo(null);
     setError(null);
+    setFilterType('all');
   };
 
   const fetchData = useCallback(async (token: string) => {
@@ -91,7 +94,9 @@ const AppContent: React.FC = () => {
         const cachedCommit = commitCache[selectedRepo.id]?.[language];
         const cachedBranches = branchCache[selectedRepo.id];
 
-        if (cachedCommit && cachedBranches) {
+        // Check if we have basic details AND the readme (if it exists or checked)
+        // Note: We'll re-fetch if readme is undefined to ensure we support the new feature for old cached items
+        if (cachedCommit && cachedBranches && cachedCommit.readme !== undefined) {
           setIsDetailLoading(false);
           return;
         }
@@ -100,26 +105,38 @@ const AppContent: React.FC = () => {
         try {
           const promises = [];
 
-          // Promise for commit details and AI summary
-          if (!cachedCommit) {
+          // Promise for commit details, readme, and AI summary
+          if (!cachedCommit || cachedCommit.readme === undefined) {
             promises.push(
               (async () => {
-                const latestCommit = await getLatestCommit(pat, selectedRepo.owner.login, selectedRepo.name);
+                const [latestCommit, readmeContent] = await Promise.all([
+                   getLatestCommit(pat, selectedRepo.owner.login, selectedRepo.name),
+                   getReadme(pat, selectedRepo.owner.login, selectedRepo.name)
+                ]);
+
                 let commitData: CommitInfo;
 
                 if (latestCommit) {
                   const [source, summary] = await Promise.all([
                     analyzeCommitMessage(latestCommit.commit.message, language),
-                    summarizeProject(selectedRepo.name, selectedRepo.description || '', latestCommit.commit.message, language)
+                    summarizeProject(selectedRepo.name, selectedRepo.description || '', latestCommit.commit.message, readmeContent, language)
                   ]);
                   commitData = {
                     message: latestCommit.commit.message,
                     date: latestCommit.commit.author?.date || new Date().toISOString(),
                     source: source,
                     aiSummary: summary,
+                    readme: readmeContent,
                   };
                 } else {
-                  commitData = { message: 'No commits found for this repository.', date: new Date().toISOString(), source: 'Unknown', aiSummary: 'Could not generate summary as no commit information was found.' };
+                  // Even if no commits, we might have a README (unlikely but possible in some states)
+                  commitData = { 
+                      message: 'No commits found for this repository.', 
+                      date: new Date().toISOString(), 
+                      source: 'Unknown', 
+                      aiSummary: 'Could not generate summary as no commit information was found.',
+                      readme: readmeContent 
+                  };
                 }
                 setCommitCache(prevCache => ({ ...prevCache, [selectedRepo.id]: { ...prevCache[selectedRepo.id], [language]: commitData } }));
               })()
@@ -156,7 +173,13 @@ const AppContent: React.FC = () => {
 
         } catch (err) {
           console.error("Failed to fetch repository details:", err);
-           const errorCommitData: CommitInfo = { message: 'Could not fetch latest commit information.', date: new Date().toISOString(), source: 'Unknown', aiSummary: 'Analysis failed due to an error fetching commit data.'};
+           const errorCommitData: CommitInfo = { 
+               message: 'Could not fetch latest commit information.', 
+               date: new Date().toISOString(), 
+               source: 'Unknown', 
+               aiSummary: 'Analysis failed due to an error fetching commit data.',
+               readme: null
+            };
            setCommitCache(prevCache => ({
               ...prevCache,
               [selectedRepo.id]: { ...prevCache[selectedRepo.id], [language]: errorCommitData }
@@ -175,9 +198,14 @@ const AppContent: React.FC = () => {
     return <AuthScreen onSetPat={handleSetPat} error={error} isLoading={isLoading} />;
   }
 
-  const filteredRepos = repos.filter(repo =>
-    repo.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredRepos = repos.filter(repo => {
+    const matchesSearch = repo.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = 
+      filterType === 'all' ? true :
+      filterType === 'private' ? repo.private :
+      !repo.private; // public
+    return matchesSearch && matchesFilter;
+  });
 
   const sortedRepos = [...filteredRepos].sort((a, b) => {
     const aIsPinned = pinnedRepoIds.includes(a.id);
@@ -193,7 +221,8 @@ const AppContent: React.FC = () => {
   return (
     <Dashboard
       user={user}
-      repos={sortedRepos}
+      repos={sortedRepos} // This is now filtered by both search and public/private
+      allReposCount={repos} // Pass raw repos for correct stats calculation
       contributionData={contributionData}
       selectedRepo={selectedRepo}
       commitInfo={currentCommitInfo}
@@ -207,6 +236,8 @@ const AppContent: React.FC = () => {
       onTogglePin={togglePinRepo}
       searchTerm={searchTerm}
       onSearchChange={setSearchTerm}
+      filterType={filterType}
+      onFilterChange={setFilterType}
     />
   );
 };

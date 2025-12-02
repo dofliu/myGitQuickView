@@ -1,19 +1,37 @@
+
 import React from 'react';
-import { GithubRepo } from '../types';
+import { GithubRepo, FilterType } from '../types';
 import { useLocalization } from '../contexts/LocalizationContext';
 
 interface SummaryStatsProps {
   repos: GithubRepo[];
+  currentFilter: FilterType;
+  onFilterChange: (type: FilterType) => void;
 }
 
-const StatCard: React.FC<{ title: string; value: string | number; colorClass: string }> = ({ title, value, colorClass }) => (
-    <div className={`bg-gray-800/50 p-4 rounded-xl border border-gray-700 flex flex-col`}>
+interface StatCardProps {
+    title: string;
+    value: string | number;
+    colorClass: string;
+    isActive: boolean;
+    onClick: () => void;
+}
+
+const StatCard: React.FC<StatCardProps> = ({ title, value, colorClass, isActive, onClick }) => (
+    <button 
+        onClick={onClick}
+        className={`p-4 rounded-xl border flex flex-col items-start transition-all duration-200 w-full ${
+            isActive 
+            ? 'bg-gray-800 border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.15)] transform scale-[1.02]' 
+            : 'bg-gray-800/50 border-gray-700 hover:bg-gray-800 hover:border-gray-600'
+        }`}
+    >
         <span className="text-2xl font-bold tracking-tight text-white">{value}</span>
         <span className={`text-sm font-medium ${colorClass}`}>{title}</span>
-    </div>
+    </button>
 );
 
-const SummaryStats: React.FC<SummaryStatsProps> = ({ repos }) => {
+const SummaryStats: React.FC<SummaryStatsProps> = ({ repos, currentFilter, onFilterChange }) => {
   const { t } = useLocalization();
   const totalRepos = repos.length;
   const privateRepos = repos.filter(r => r.private).length;
@@ -34,9 +52,27 @@ const SummaryStats: React.FC<SummaryStatsProps> = ({ repos }) => {
   return (
     <div className="h-full flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-4">
-            <StatCard title={t('totalRepos')} value={totalRepos} colorClass="text-cyan-400" />
-            <StatCard title={t('publicRepos')} value={publicRepos} colorClass="text-green-400" />
-            <StatCard title={t('privateRepos')} value={privateRepos} colorClass="text-yellow-400" />
+            <StatCard 
+                title={t('totalRepos')} 
+                value={totalRepos} 
+                colorClass="text-cyan-400" 
+                isActive={currentFilter === 'all'}
+                onClick={() => onFilterChange('all')}
+            />
+            <StatCard 
+                title={t('publicRepos')} 
+                value={publicRepos} 
+                colorClass="text-green-400" 
+                isActive={currentFilter === 'public'}
+                onClick={() => onFilterChange('public')}
+            />
+            <StatCard 
+                title={t('privateRepos')} 
+                value={privateRepos} 
+                colorClass="text-yellow-400" 
+                isActive={currentFilter === 'private'}
+                onClick={() => onFilterChange('private')}
+            />
         </div>
         <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700 flex-grow">
           <h3 className="text-sm font-medium text-purple-400 mb-2">{t('topLanguages')}</h3>

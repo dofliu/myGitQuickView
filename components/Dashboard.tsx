@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails } from '../types';
+import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails, FilterType } from '../types';
 import SummaryStats from './SummaryStats';
 import RepoList from './RepoList';
 import RepoGrid from './RepoGrid';
@@ -14,6 +15,7 @@ import { SparklesIcon } from './icons/SparklesIcon';
 interface DashboardProps {
   user: GithubUser | null;
   repos: GithubRepo[];
+  allReposCount: GithubRepo[]; // Needed to show correct totals even when filtered
   contributionData: ContributionData | null;
   selectedRepo: GithubRepo | null;
   commitInfo: CommitInfo | null;
@@ -27,11 +29,14 @@ interface DashboardProps {
   onTogglePin: (repoId: number) => void;
   searchTerm: string;
   onSearchChange: (term: string) => void;
+  filterType: FilterType;
+  onFilterChange: (type: FilterType) => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({
   user,
   repos,
+  allReposCount,
   contributionData,
   selectedRepo,
   commitInfo,
@@ -45,6 +50,8 @@ const Dashboard: React.FC<DashboardProps> = ({
   onTogglePin,
   searchTerm,
   onSearchChange,
+  filterType,
+  onFilterChange,
 }) => {
   const { t } = useLocalization();
   const [isAiPanelOpen, setIsAiPanelOpen] = useState(false);
@@ -75,7 +82,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                    {contributionData && <ContributionGraph data={contributionData} />}
                 </div>
                 <div className="xl:col-span-1">
-                  <SummaryStats repos={repos} />
+                  <SummaryStats 
+                    repos={allReposCount} 
+                    currentFilter={filterType}
+                    onFilterChange={onFilterChange}
+                  />
                 </div>
               </div>
               

@@ -1,3 +1,4 @@
+
 type Translation = {
   [key: string]: string;
 };
@@ -75,6 +76,8 @@ const en: Translation = {
   noAiSummary: 'Could not generate AI summary.',
   activeBranches: 'Active Branches',
   noOtherBranches: 'No other active branches found.',
+  readme: 'Project README',
+  noReadme: 'No README found for this project.',
 
   // AI Chat Panel
   portfolioAdvisor: 'Portfolio Advisor',
@@ -169,6 +172,8 @@ const zhTW: Translation = {
   noAiSummary: '無法生成 AI 摘要。',
   activeBranches: '進行中的分支',
   noOtherBranches: '找不到其他進行中的分支。',
+  readme: '專案 README',
+  noReadme: '此專案找不到 README 文件。',
   
   // AI Chat Panel
   portfolioAdvisor: '組合顧問',

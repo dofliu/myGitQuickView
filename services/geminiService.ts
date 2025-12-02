@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { GithubRepo, ChatMessage, TaskItem } from '../types';
 
@@ -25,13 +26,15 @@ Commit Message: "${message}"`;
   }
 };
 
-export const summarizeProject = async (name: string, description: string, latestCommit: string, language: string): Promise<string> => {
+export const summarizeProject = async (name: string, description: string, latestCommit: string, readme: string | null, language: string): Promise<string> => {
     try {
-        const prompt = `As a senior software engineer creating a portfolio, write a concise, one-paragraph summary for the following project. Highlight its purpose, key technologies, and potential use case. Base the summary on the project name, its description, and the latest commit message. Respond in ${language}.
+        const readmeContext = readme ? `\nProject README (truncated): ${readme.slice(0, 1500)}...` : '';
+        
+        const prompt = `As a senior software engineer creating a portfolio, write a concise, one-paragraph summary for the following project. Highlight its purpose, key technologies, and potential use case. Base the summary on the project name, description, latest commit message, and the README content provided. Respond in ${language}.
 
 Project Name: ${name}
 Description: ${description}
-Latest Commit: "${latestCommit}"
+Latest Commit: "${latestCommit}"${readmeContext}
 
 Summary:`;
         
