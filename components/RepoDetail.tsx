@@ -25,27 +25,17 @@ const LoadingSpinner: React.FC = () => (
     </svg>
 );
 
-// Basic Markdown Renderer to avoid external dependencies for this specific environment
 const SimpleMarkdownRenderer: React.FC<{ content: string }> = ({ content }) => {
-    // Basic replacements for headings, bold, code blocks, lists
-    // Note: This is not a full markdown parser, but sufficient for basic READMEs
     const formatMarkdown = (text: string) => {
         let formatted = text
-            // Escape HTML (basic)
             .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-            // Code Blocks
             .replace(/```(\w+)?\s*([\s\S]*?)```/g, '<pre class="bg-gray-900/80 p-4 rounded-lg my-4 overflow-x-auto text-sm text-gray-300 font-mono border border-gray-700"><code>$2</code></pre>')
-            // Inline Code
             .replace(/`([^`]+)`/g, '<code class="bg-gray-700/50 text-purple-300 px-1.5 py-0.5 rounded text-sm font-mono">$1</code>')
-            // Headers
             .replace(/^# (.*$)/gim, '<h1 class="text-2xl font-bold text-white mt-6 mb-3 border-b border-gray-700 pb-2">$1</h1>')
             .replace(/^## (.*$)/gim, '<h2 class="text-xl font-bold text-cyan-400 mt-5 mb-2">$1</h2>')
             .replace(/^### (.*$)/gim, '<h3 class="text-lg font-bold text-gray-200 mt-4 mb-2">$1</h3>')
-            // Bold
             .replace(/\*\*(.*)\*\*/gim, '<strong class="text-white font-semibold">$1</strong>')
-            // Links
             .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-cyan-400 hover:underline">$1</a>')
-            // Lists
             .replace(/^\s*-\s+(.*$)/gim, '<li class="ml-4 list-disc text-gray-300">$1</li>')
             .replace(/^\s*\d+\.\s+(.*$)/gim, '<li class="ml-4 list-decimal text-gray-300">$1</li>');
 
@@ -94,7 +84,14 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, onB
             </div>
 
             <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
-                <h3 className="text-lg font-semibold text-cyan-400 mb-4">{t('latestUpdate')}</h3>
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-semibold text-cyan-400">{t('latestUpdate')}</h3>
+                    {commitInfo && !isLoading && (
+                        <span className="text-xs bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 px-3 py-1 rounded-full font-mono">
+                            {commitInfo.branchName}
+                        </span>
+                    )}
+                </div>
                 {isLoading ? (
                     <div className="flex items-center justify-center h-24"><LoadingSpinner /></div>
                 ) : commitInfo ? (
@@ -115,7 +112,6 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, onB
                 )}
             </div>
 
-            {/* AI Summary Section */}
             <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
                 <h3 className="text-lg font-semibold text-cyan-400 mb-4">{t('aiSummary')}</h3>
                  {isLoading ? (
@@ -127,7 +123,6 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, onB
                 )}
             </div>
 
-            {/* README Section */}
             <div className="bg-gray-800/50 p-6 rounded-xl border border-gray-700">
                 <h3 className="text-lg font-semibold text-cyan-400 mb-4">{t('readme')}</h3>
                  {isLoading ? (
@@ -146,9 +141,14 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, onB
                 ) : branches && branches.length > 0 ? (
                     <ul className="space-y-4">
                         {branches.map(branch => (
-                            <li key={branch.name} className="bg-gray-900/60 p-4 rounded-lg border border-gray-700/50">
+                            <li key={branch.name} className={`p-4 rounded-lg border transition-colors ${commitInfo?.branchName === branch.name ? 'bg-cyan-500/5 border-cyan-500/30' : 'bg-gray-900/60 border-gray-700/50'}`}>
                                 <div className="flex justify-between items-start mb-2 gap-4">
-                                    <p className="text-md text-white font-bold font-mono break-all">{branch.name}</p>
+                                    <div className="flex items-center gap-2">
+                                        <p className="text-md text-white font-bold font-mono break-all">{branch.name}</p>
+                                        {commitInfo?.branchName === branch.name && (
+                                            <span className="text-[10px] bg-cyan-500 text-white px-1.5 py-0.5 rounded-sm uppercase tracking-tighter">Latest</span>
+                                        )}
+                                    </div>
                                     <p className="text-xs text-gray-400 flex-shrink-0">{new Date(branch.lastCommit.date).toLocaleDateString()}</p>
                                 </div>
                                 <p className="text-sm text-gray-300 font-mono bg-gray-800/50 p-2 rounded truncate" title={branch.lastCommit.message}>

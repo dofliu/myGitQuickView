@@ -70,7 +70,7 @@ const AppContent: React.FC = () => {
       setContributionData(contribData);
     } catch (err) {
       setError('Failed to fetch data. Please check your Personal Access Token and permissions.');
-      handleSignOut(); // Reset state on error
+      handleSignOut();
     } finally {
       setIsLoading(false);
     }
@@ -94,8 +94,6 @@ const AppContent: React.FC = () => {
         const cachedCommit = commitCache[selectedRepo.id]?.[language];
         const cachedBranches = branchCache[selectedRepo.id];
 
-        // Check if we have basic details AND the readme (if it exists or checked)
-        // Note: We'll re-fetch if readme is undefined to ensure we support the new feature for old cached items
         if (cachedCommit && cachedBranches && cachedCommit.readme !== undefined) {
           setIsDetailLoading(false);
           return;
@@ -103,96 +101,76 @@ const AppContent: React.FC = () => {
 
         setIsDetailLoading(true);
         try {
-          const promises = [];
-
-          // Promise for commit details, readme, and AI summary
-          if (!cachedCommit || cachedCommit.readme === undefined) {
-            promises.push(
-              (async () => {
-                const [latestCommit, readmeContent] = await Promise.all([
-                   getLatestCommit(pat, selectedRepo.owner.login, selectedRepo.name),
-                   getReadme(pat, selectedRepo.owner.login, selectedRepo.name)
-                ]);
-
-                let commitData: CommitInfo;
-
-                if (latestCommit) {
-                  const [source, summary] = await Promise.all([
-                    analyzeCommitMessage(latestCommit.commit.message, language),
-                    summarizeProject(selectedRepo.name, selectedRepo.description || '', latestCommit.commit.message, readmeContent, language)
-                  ]);
-                  commitData = {
-                    message: latestCommit.commit.message,
-                    date: latestCommit.commit.author?.date || new Date().toISOString(),
-                    source: source,
-                    aiSummary: summary,
-                    readme: readmeContent,
-                  };
-                } else {
-                  // Even if no commits, we might have a README (unlikely but possible in some states)
-                  commitData = { 
-                      message: 'No commits found for this repository.', 
-                      date: new Date().toISOString(), 
-                      source: 'Unknown', 
-                      aiSummary: 'Could not generate summary as no commit information was found.',
-                      readme: readmeContent 
-                  };
-                }
-                setCommitCache(prevCache => ({ ...prevCache, [selectedRepo.id]: { ...prevCache[selectedRepo.id], [language]: commitData } }));
-              })()
-            );
-          }
-
-          // Promise for branch details
-          if (!cachedBranches) {
-            promises.push(
-              (async () => {
-                const branchesData = await getRepoBranches(pat, selectedRepo.owner.login, selectedRepo.name);
-                const branchDetailsPromises = branchesData
-                  .filter(branch => branch.name !== selectedRepo.default_branch)
-                  .map(async (branch) => {
-                    const branchCommit = await getLatestCommit(pat, selectedRepo.owner.login, selectedRepo.name, branch.name);
-                    return {
-                      name: branch.name,
-                      lastCommit: {
-                        message: branchCommit?.commit.message || 'No commit message found.',
-                        date: branchCommit?.commit.author?.date || new Date().toISOString(),
-                      }
-                    } as BranchDetails;
-                  });
-                const detailedBranches = await Promise.all(branchDetailsPromises);
-                setBranchCache(prevCache => ({
-                  ...prevCache,
-                  [selectedRepo.id]: detailedBranches
-                }));
-              })()
-            );
-          }
+          // 1. Fetch all branches first
+          const branchesData = await getRepoBranches(pat, selectedRepo.owner.login, selectedRepo.name);
           
-          await Promise.all(promises);
+          // 2. Fetch the latest commit for EVERY branch to find the true latest
+          const branchDetailPromises = branchesData.map(async (branch) => {
+            const branchCommit = await getLatestCommit(pat, selectedRepo.owner.login, selectedRepo.name, branch.name);
+            return {
+              name: branch.name,
+              lastCommit: {
+                message: branchCommit?.commit.message || 'No commit message found.',
+                date: branchCommit?.commit.author?.date || new Date(0).toISOString(),
+              }
+            } as BranchDetails;
+          });
+
+          const allBranchDetails = await Promise.all(branchDetailPromises);
+          
+          // Sort branches by date (descending)
+          allBranchDetails.sort((a, b) => new Date(b.lastCommit.date).getTime() - new Date(a.lastCommit.date).getTime());
+          
+          const latestBranch = allBranchDetails[0];
+          const readmeContent = await getReadme(pat, selectedRepo.owner.login, selectedRepo.name);
+
+          // 3. Analyze the latest overall commit
+          const [source, summary] = await Promise.all([
+            analyzeCommitMessage(latestBranch.lastCommit.message, language),
+            summarizeProject(selectedRepo.name, selectedRepo.description || '', latestBranch.lastCommit.message, readmeContent, language)
+          ]);
+
+          const commitData: CommitInfo = {
+            message: latestBranch.lastCommit.message,
+            date: latestBranch.lastCommit.date,
+            source: source,
+            branchName: latestBranch.name,
+            aiSummary: summary,
+            readme: readmeContent,
+          };
+
+          setCommitCache(prev => ({ 
+            ...prev, 
+            [selectedRepo.id]: { ...prev[selectedRepo.id], [language]: commitData } 
+          }));
+          
+          setBranchCache(prev => ({
+            ...prev,
+            [selectedRepo.id]: allBranchDetails
+          }));
 
         } catch (err) {
           console.error("Failed to fetch repository details:", err);
-           const errorCommitData: CommitInfo = { 
-               message: 'Could not fetch latest commit information.', 
-               date: new Date().toISOString(), 
-               source: 'Unknown', 
-               aiSummary: 'Analysis failed due to an error fetching commit data.',
-               readme: null
-            };
-           setCommitCache(prevCache => ({
-              ...prevCache,
-              [selectedRepo.id]: { ...prevCache[selectedRepo.id], [language]: errorCommitData }
+          const errorCommitData: CommitInfo = { 
+            message: 'Could not fetch latest commit information.', 
+            date: new Date().toISOString(), 
+            source: 'Unknown', 
+            branchName: 'Unknown',
+            aiSummary: 'Analysis failed due to an error fetching commit data.',
+            readme: null
+          };
+          setCommitCache(prev => ({
+            ...prev,
+            [selectedRepo.id]: { ...prev[selectedRepo.id], [language]: errorCommitData }
           }));
-          setBranchCache(prev => ({ ...prev, [selectedRepo.id]: [] })); // Set empty array on error
+          setBranchCache(prev => ({ ...prev, [selectedRepo.id]: [] }));
         } finally {
           setIsDetailLoading(false);
         }
       }
     };
     fetchDetails();
-  }, [selectedRepo, pat, language, commitCache, branchCache]);
-
+  }, [selectedRepo, pat, language]);
 
   if (!pat || error) {
     return <AuthScreen onSetPat={handleSetPat} error={error} isLoading={isLoading} />;
@@ -203,7 +181,7 @@ const AppContent: React.FC = () => {
     const matchesFilter = 
       filterType === 'all' ? true :
       filterType === 'private' ? repo.private :
-      !repo.private; // public
+      !repo.private; 
     return matchesSearch && matchesFilter;
   });
 
@@ -221,8 +199,8 @@ const AppContent: React.FC = () => {
   return (
     <Dashboard
       user={user}
-      repos={sortedRepos} // This is now filtered by both search and public/private
-      allReposCount={repos} // Pass raw repos for correct stats calculation
+      repos={sortedRepos}
+      allReposCount={repos}
       contributionData={contributionData}
       selectedRepo={selectedRepo}
       commitInfo={currentCommitInfo}

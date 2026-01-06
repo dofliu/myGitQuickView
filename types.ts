@@ -34,6 +34,7 @@ export interface CommitInfo {
     message: string;
     date: string;
     source: string;
+    branchName: string; // New field
     aiSummary?: string;
     readme?: string | null;
 }
