@@ -96,6 +96,14 @@ const en: Translation = {
   tasksForRepo: 'Get AI-suggested next steps for {repoName}.',
   noTasksGenerated: 'No tasks generated yet.',
   completed: 'Completed',
+
+  // Showcase Feature
+  showcase: 'Showcase',
+  generateShowcase: 'Generate Professional Showcase',
+  generatingShowcase: 'AI is crafting your professional showcase...',
+  showcaseDescription: 'Create a professional summary of this project for your resume or portfolio.',
+  copyShowcase: 'Copy to Clipboard',
+  showcaseCopied: 'Copied!',
 };
 
 const zhTW: Translation = {
@@ -192,6 +200,14 @@ const zhTW: Translation = {
   tasksForRepo: '為 {repoName} 獲取 AI 建議的後續步驟。',
   noTasksGenerated: '尚未生成任何任務。',
   completed: '已完成',
+
+  // Showcase Feature
+  showcase: '履歷摘要',
+  generateShowcase: '生成專業專案摘要',
+  generatingShowcase: 'AI 正在為您撰寫專業摘要...',
+  showcaseDescription: '為您的履歷或作品集建立此專案的專業總結。',
+  copyShowcase: '複製摘要',
+  showcaseCopied: '已複製！',
 };
 
 export const translations = {

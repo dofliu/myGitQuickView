@@ -2,9 +2,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { GithubRepo, ChatMessage, TaskItem } from '../types';
 
-// FIX: Aligned with @google/genai coding guidelines.
-// The API key is sourced directly from process.env.API_KEY, and the client is initialized once.
-// Redundant checks for the API key are removed, assuming it's configured in the environment.
 export const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzeCommitMessage = async (message: string, language: string): Promise<string> => {
@@ -14,7 +11,7 @@ export const analyzeCommitMessage = async (message: string, language: string): P
 Commit Message: "${message}"`;
     
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3-flash-preview',
         contents: prompt
     });
 
@@ -39,7 +36,7 @@ Latest Commit: "${latestCommit}"${readmeContext}
 Summary:`;
         
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: 'gemini-3-flash-preview',
             contents: prompt
         });
 
@@ -51,6 +48,38 @@ Summary:`;
     }
 };
 
+export const generateProjectShowcase = async (repo: GithubRepo, readme: string | null, language: string): Promise<string> => {
+    try {
+        const readmeContext = readme ? `\nREADME Context: ${readme.slice(0, 2000)}` : '';
+        const prompt = `You are a professional technical recruiter and career coach. Write a highly professional resume-style summary for the following GitHub project. 
+
+Use the STAR method (Situation, Task, Action, Result) if possible. Focus on:
+1. The problem the project solves.
+2. The core technical stack used.
+3. Key features and engineering achievements.
+4. The professional value this project demonstrates.
+
+The response should be formatted in Markdown, suitable for a "Projects" section on a resume or a LinkedIn profile.
+
+Project: ${repo.name}
+Description: ${repo.description || 'N/A'}
+Language: ${repo.language || 'N/A'}
+${readmeContext}
+
+Respond in ${language}.`;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-3-pro-preview',
+            contents: prompt
+        });
+
+        return response.text.trim() || "Could not generate showcase.";
+    } catch (error) {
+        console.error("Error generating project showcase:", error);
+        return "Failed to generate professional showcase.";
+    }
+};
+
 export const getPortfolioAnalysis = async (repos: GithubRepo[], language: string): Promise<string> => {
     try {
         const repoSummaries = repos.map(repo => ({
@@ -58,7 +87,7 @@ export const getPortfolioAnalysis = async (repos: GithubRepo[], language: string
             description: repo.description,
             language: repo.language,
             lastUpdate: repo.pushed_at,
-        })).slice(0, 50); // Use the 50 most recently pushed repos
+        })).slice(0, 50);
 
         const prompt = `You are a senior tech career advisor and GitHub expert. I will provide you with a list of my GitHub projects.
 
@@ -78,7 +107,7 @@ ${JSON.stringify(repoSummaries, null, 2)}
 `;
         
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-3-pro-preview',
             contents: prompt
         });
 
@@ -100,7 +129,7 @@ Primary Language: ${repo.language || 'N/A'}
 Latest Commit: "${latestCommit}"`;
         
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: 'gemini-3-pro-preview',
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
