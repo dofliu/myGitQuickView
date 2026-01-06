@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { GithubRepo } from '../types';
 import RepoCard from './RepoCard';
@@ -8,9 +9,11 @@ interface RepoGridProps {
   onSelectRepo: (repo: GithubRepo) => void;
   pinnedRepoIds: number[];
   onTogglePin: (repoId: number) => void;
+  selectedForShowcaseIds: number[];
+  onToggleShowcase: (repoId: number) => void;
 }
 
-const RepoGrid: React.FC<RepoGridProps> = ({ repos, onSelectRepo, pinnedRepoIds, onTogglePin }) => {
+const RepoGrid: React.FC<RepoGridProps> = ({ repos, onSelectRepo, pinnedRepoIds, onTogglePin, selectedForShowcaseIds, onToggleShowcase }) => {
   const { t } = useLocalization();
   return (
     <div>
@@ -23,6 +26,8 @@ const RepoGrid: React.FC<RepoGridProps> = ({ repos, onSelectRepo, pinnedRepoIds,
                     onClick={() => onSelectRepo(repo)}
                     isPinned={pinnedRepoIds.includes(repo.id)}
                     onTogglePin={() => onTogglePin(repo.id)}
+                    isSelected={selectedForShowcaseIds.includes(repo.id)}
+                    onToggleShowcase={() => onToggleShowcase(repo.id)}
                 />
             ))}
         </div>

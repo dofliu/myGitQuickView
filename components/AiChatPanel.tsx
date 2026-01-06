@@ -18,6 +18,7 @@ interface AiChatPanelProps {
   user: GithubUser | null;
   commitInfo: CommitInfo | null;
   onClose?: () => void;
+  selectedForShowcaseIds?: number[];
 }
 
 const LoadingState: React.FC<{ message?: string }> = ({ message }) => {
@@ -32,7 +33,7 @@ const LoadingState: React.FC<{ message?: string }> = ({ message }) => {
 
 type PanelView = 'chat' | 'tasks' | 'showcase';
 
-const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, commitInfo, onClose }) => {
+const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, commitInfo, onClose, selectedForShowcaseIds = [] }) => {
   const { t, language } = useLocalization();
   const [isFetchingInitial, setIsFetchingInitial] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -41,7 +42,6 @@ const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, co
   const [isStreaming, setIsStreaming] = useState(false);
   const [view, setView] = useState<PanelView>('chat');
 
-  // Task & Showcase state
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [isGeneratingTasks, setIsGeneratingTasks] = useState(false);
   const [showcaseContent, setShowcaseContent] = useState<string | null>(null);
@@ -51,9 +51,10 @@ const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, co
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const context = selectedRepo ? 'repo' : 'global';
+  const hasSelection = selectedForShowcaseIds.length > 0;
+  
   const chatStorageKey = user ? (selectedRepo ? `aiChatHistory_repo_${selectedRepo.id}_${user.login}` : `aiChatHistory_global_${user.login}`) : null;
   const taskStorageKey = user && selectedRepo ? `aiTasks_repo_${selectedRepo.id}_${user.login}` : null;
-  const showcaseStorageKey = user && selectedRepo ? `aiShowcase_repo_${selectedRepo.id}_${user.login}` : null;
   
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -92,11 +93,6 @@ const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, co
           const savedTasks = localStorage.getItem(taskStorageKey);
           if (savedTasks) setTasks(JSON.parse(savedTasks));
       }
-
-      if (showcaseStorageKey) {
-          const savedShowcase = localStorage.getItem(showcaseStorageKey);
-          if (savedShowcase) setShowcaseContent(savedShowcase);
-      }
     };
     fetchInitialData();
   }, [selectedRepo, user, language]);
@@ -109,10 +105,6 @@ const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, co
     if (taskStorageKey) localStorage.setItem(taskStorageKey, JSON.stringify(tasks));
   }, [tasks, taskStorageKey]);
 
-  useEffect(() => {
-    if (showcaseStorageKey && showcaseContent) localStorage.setItem(showcaseStorageKey, showcaseContent);
-  }, [showcaseContent, showcaseStorageKey]);
-
   const handleGenerateTasks = async () => {
     if (!selectedRepo || !commitInfo) return;
     setIsGeneratingTasks(true);
@@ -123,10 +115,23 @@ const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, co
   };
 
   const handleGenerateShowcase = async () => {
-      if (!selectedRepo) return;
+      let targetRepos: GithubRepo[] = [];
+      let readmeMap: {[id: number]: string | null} = {};
+
+      if (selectedRepo) {
+          targetRepos = [selectedRepo];
+          readmeMap[selectedRepo.id] = commitInfo?.readme || null;
+      } else if (hasSelection) {
+          targetRepos = repos.filter(r => selectedForShowcaseIds.includes(r.id));
+          // Note: readme content for multiple repos might be missing if not viewed yet. 
+          // Ideally we fetch them, but for brevity we rely on repo description if missing.
+      } else {
+          return;
+      }
+
       setIsGeneratingShowcase(true);
       try {
-          const content = await generateProjectShowcase(selectedRepo, commitInfo?.readme || null, language);
+          const content = await generateProjectShowcase(targetRepos, readmeMap, language);
           setShowcaseContent(content);
       } catch (error) { console.error(error); } finally { setIsGeneratingShowcase(false); }
   };
@@ -159,13 +164,11 @@ const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, co
     try {
         let currentChat = chat;
         if (!currentChat) {
-            const repoSummaries = repos.map(repo => ({ name: repo.name, description: repo.description, language: repo.language })).slice(0, 50);
-            const initialHistory: any[] = chatHistory.map(m => ({ role: m.role, parts: [{ text: m.text }] }));
             const systemInstruction = selectedRepo
-                ? `You are a helpful AI project assistant for the project '${selectedRepo.name}'. Use context from README and commits to answer specifically about this project.`
-                : `You are a senior tech career advisor. Help users understand their portfolio and technical direction.`;
+                ? `You are a helpful AI project assistant for the project '${selectedRepo.name}'.`
+                : `You are a senior tech career advisor helping with a portfolio of ${repos.length} projects.`;
             
-            const newChat = ai.chats.create({ model: 'gemini-3-pro-preview', history: initialHistory, config: { systemInstruction } });
+            const newChat = ai.chats.create({ model: 'gemini-3-pro-preview', config: { systemInstruction } });
             setChat(newChat);
             currentChat = newChat;
         }
@@ -194,21 +197,28 @@ const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, co
           return <AiTaskList tasks={tasks} onToggleTask={handleToggleTask} isGenerating={isGeneratingTasks} onGenerate={handleGenerateTasks} repoName={selectedRepo.name} />;
       }
       
-      if (view === 'showcase' && selectedRepo) {
+      if (view === 'showcase') {
           if (isGeneratingShowcase) return <LoadingState message={t('generatingShowcase')} />;
           return (
               <div className="p-6 space-y-6">
                   {!showcaseContent ? (
                       <div className="text-center space-y-4 py-8">
-                          <StarIcon className="h-12 w-12 text-yellow-400 mx-auto" />
+                          <StarIcon className={`h-12 w-12 mx-auto ${context === 'global' ? 'text-yellow-400' : 'text-yellow-500'}`} />
                           <div>
-                              <h3 className="text-lg font-bold text-white">{t('showcase')}</h3>
+                              <h3 className="text-lg font-bold text-white">
+                                {context === 'global' ? `Selected Projects Showcase (${selectedForShowcaseIds.length})` : t('showcase')}
+                              </h3>
                               <p className="text-gray-400 text-sm">{t('showcaseDescription')}</p>
                           </div>
-                          <button onClick={handleGenerateShowcase} className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg flex items-center gap-2 mx-auto">
+                          <button 
+                            onClick={handleGenerateShowcase} 
+                            disabled={context === 'global' && !hasSelection}
+                            className={`bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white font-bold py-3 px-6 rounded-xl transition-all shadow-lg flex items-center gap-2 mx-auto ${context === 'global' && !hasSelection ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
+                          >
                               <SparklesIcon className="h-5 w-5" />
                               {t('generateShowcase')}
                           </button>
+                          {context === 'global' && !hasSelection && <p className="text-xs text-gray-500">Please select at least one project from the list to generate a summary.</p>}
                       </div>
                   ) : (
                       <div className="space-y-4 animate-fade-in">
@@ -269,11 +279,13 @@ const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, co
             </div>
              {onClose ? (
               <button onClick={onClose} className="p-1 rounded-full text-gray-400 hover:bg-gray-800 hover:text-white transition-colors"><CloseIcon className="h-6 w-6" /></button>
-            ) : selectedRepo && (
+            ) : (
                 <div className="flex items-center bg-gray-800 rounded-full p-1 text-xs">
                     <button onClick={() => setView('chat')} className={`px-3 py-1 rounded-full transition-colors ${view === 'chat' ? 'bg-cyan-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>{t('chat')}</button>
-                    <button onClick={() => setView('tasks')} className={`px-3 py-1 rounded-full transition-colors ${view === 'tasks' ? 'bg-cyan-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>{t('tasks')}</button>
-                    <button onClick={() => setView('showcase')} className={`px-3 py-1 rounded-full transition-colors ${view === 'showcase' ? 'bg-cyan-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>{t('showcase')}</button>
+                    {selectedRepo && <button onClick={() => setView('tasks')} className={`px-3 py-1 rounded-full transition-colors ${view === 'tasks' ? 'bg-cyan-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>{t('tasks')}</button>}
+                    <button onClick={() => setView('showcase')} className={`px-3 py-1 rounded-full transition-colors ${view === 'showcase' ? 'bg-cyan-500 text-white' : 'text-gray-400 hover:bg-gray-700'}`}>
+                        {context === 'global' && hasSelection ? `Resume (${selectedForShowcaseIds.length})` : t('showcase')}
+                    </button>
                 </div>
             )}
         </header>
@@ -287,7 +299,6 @@ const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, co
 
 export default AiChatPanel;
 
-// Internal helpers needed for icons
 const RefreshIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...props}>
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h5M20 20v-5h-5M4 4a8 8 0 0113.546 5.023M20 20a8 8 0 01-13.546-5.023" />

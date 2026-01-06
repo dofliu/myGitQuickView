@@ -13,6 +13,7 @@ const AppContent: React.FC = () => {
   const [repos, setRepos] = useState<GithubRepo[]>([]);
   const [contributionData, setContributionData] = useState<ContributionData | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<GithubRepo | null>(null);
+  const [selectedForShowcaseIds, setSelectedForShowcaseIds] = useState<number[]>([]); // New Multi-selection state
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isDetailLoading, setIsDetailLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,12 +46,19 @@ const AppContent: React.FC = () => {
     localStorage.setItem('pinnedRepos', JSON.stringify(newPinnedIds));
   };
 
+  const toggleShowcaseSelection = (repoId: number) => {
+    setSelectedForShowcaseIds(prev => 
+      prev.includes(repoId) ? prev.filter(id => id !== repoId) : [...prev, repoId]
+    );
+  };
+
   const handleSignOut = () => {
     setPat(null);
     setUser(null);
     setRepos([]);
     setContributionData(null);
     setSelectedRepo(null);
+    setSelectedForShowcaseIds([]);
     setError(null);
     setFilterType('all');
   };
@@ -85,6 +93,7 @@ const AppContent: React.FC = () => {
     if (pat) {
       fetchData(pat);
       setSelectedRepo(null);
+      setSelectedForShowcaseIds([]);
     }
   };
 
@@ -101,10 +110,7 @@ const AppContent: React.FC = () => {
 
         setIsDetailLoading(true);
         try {
-          // 1. Fetch all branches first
           const branchesData = await getRepoBranches(pat, selectedRepo.owner.login, selectedRepo.name);
-          
-          // 2. Fetch the latest commit for EVERY branch to find the true latest
           const branchDetailPromises = branchesData.map(async (branch) => {
             const branchCommit = await getLatestCommit(pat, selectedRepo.owner.login, selectedRepo.name, branch.name);
             return {
@@ -117,14 +123,11 @@ const AppContent: React.FC = () => {
           });
 
           const allBranchDetails = await Promise.all(branchDetailPromises);
-          
-          // Sort branches by date (descending)
           allBranchDetails.sort((a, b) => new Date(b.lastCommit.date).getTime() - new Date(a.lastCommit.date).getTime());
           
           const latestBranch = allBranchDetails[0];
           const readmeContent = await getReadme(pat, selectedRepo.owner.login, selectedRepo.name);
 
-          // 3. Analyze the latest overall commit
           const [source, summary] = await Promise.all([
             analyzeCommitMessage(latestBranch.lastCommit.message, language),
             summarizeProject(selectedRepo.name, selectedRepo.description || '', latestBranch.lastCommit.message, readmeContent, language)
@@ -203,9 +206,11 @@ const AppContent: React.FC = () => {
       allReposCount={repos}
       contributionData={contributionData}
       selectedRepo={selectedRepo}
+      selectedForShowcaseIds={selectedForShowcaseIds}
       commitInfo={currentCommitInfo}
       branches={currentBranches}
       onSelectRepo={setSelectedRepo}
+      onToggleShowcaseSelection={toggleShowcaseSelection}
       onRefresh={handleRefresh}
       onSignOut={handleSignOut}
       isLoading={isLoading}

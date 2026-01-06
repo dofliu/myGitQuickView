@@ -15,12 +15,14 @@ import { SparklesIcon } from './icons/SparklesIcon';
 interface DashboardProps {
   user: GithubUser | null;
   repos: GithubRepo[];
-  allReposCount: GithubRepo[]; // Needed to show correct totals even when filtered
+  allReposCount: GithubRepo[]; 
   contributionData: ContributionData | null;
   selectedRepo: GithubRepo | null;
+  selectedForShowcaseIds: number[];
   commitInfo: CommitInfo | null;
   branches: BranchDetails[] | null;
   onSelectRepo: (repo: GithubRepo | null) => void;
+  onToggleShowcaseSelection: (repoId: number) => void;
   onRefresh: () => void;
   onSignOut: () => void;
   isLoading: boolean;
@@ -39,9 +41,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   allReposCount,
   contributionData,
   selectedRepo,
+  selectedForShowcaseIds,
   commitInfo,
   branches,
   onSelectRepo,
+  onToggleShowcaseSelection,
   onRefresh,
   onSignOut,
   isLoading,
@@ -63,7 +67,15 @@ const Dashboard: React.FC<DashboardProps> = ({
       <main className="flex-grow flex overflow-hidden">
         <aside className="w-72 flex-shrink-0 bg-gray-900 border-r border-gray-800 p-4 overflow-y-auto hidden md:block">
             <h2 className="text-lg font-semibold mb-4 text-cyan-400">{t('projects')}</h2>
-            <RepoList repos={repos} selectedRepo={selectedRepo} onSelectRepo={onSelectRepo} pinnedRepoIds={pinnedRepoIds} onTogglePin={onTogglePin} />
+            <RepoList 
+                repos={repos} 
+                selectedRepo={selectedRepo} 
+                onSelectRepo={onSelectRepo} 
+                pinnedRepoIds={pinnedRepoIds} 
+                onTogglePin={onTogglePin} 
+                selectedForShowcaseIds={selectedForShowcaseIds}
+                onToggleShowcase={onToggleShowcaseSelection}
+            />
         </aside>
 
         <div className="flex-grow p-6 overflow-y-auto min-w-0">
@@ -105,21 +117,27 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               </div>
               
-              <RepoGrid repos={repos} onSelectRepo={onSelectRepo} pinnedRepoIds={pinnedRepoIds} onTogglePin={onTogglePin}/>
+              <RepoGrid 
+                repos={repos} 
+                onSelectRepo={onSelectRepo} 
+                pinnedRepoIds={pinnedRepoIds} 
+                onTogglePin={onTogglePin}
+                selectedForShowcaseIds={selectedForShowcaseIds}
+                onToggleShowcase={onToggleShowcaseSelection}
+              />
             </>
           )}
         </div>
-        {/* Desktop AI Panel */}
         <aside className="w-[450px] flex-shrink-0 bg-gray-900/50 border-l border-gray-800 flex-col hidden lg:flex">
             <AiChatPanel
                 selectedRepo={selectedRepo}
                 repos={repos}
                 user={user}
                 commitInfo={commitInfo}
+                selectedForShowcaseIds={selectedForShowcaseIds}
             />
         </aside>
 
-        {/* Mobile AI Panel Toggle Button */}
         <div className="lg:hidden fixed bottom-6 right-6 z-20">
             <button
                 onClick={() => setIsAiPanelOpen(true)}
@@ -130,7 +148,6 @@ const Dashboard: React.FC<DashboardProps> = ({
             </button>
         </div>
 
-        {/* Mobile AI Panel Modal */}
         {isAiPanelOpen && (
             <div className="lg:hidden fixed inset-0 bg-black/60 z-30 backdrop-blur-sm" onClick={() => setIsAiPanelOpen(false)}>
                 <div 
@@ -143,6 +160,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                         user={user}
                         commitInfo={commitInfo}
                         onClose={() => setIsAiPanelOpen(false)}
+                        selectedForShowcaseIds={selectedForShowcaseIds}
                     />
                 </div>
             </div>

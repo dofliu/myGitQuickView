@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { GithubRepo, ChatMessage, GithubUser, CommitInfo } from '../types';
 import { useLocalization } from '../contexts/LocalizationContext';
@@ -106,8 +107,9 @@ const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, co
                 ? `You are a helpful AI project assistant for the project '${selectedRepo.name}'. The project's primary language is ${selectedRepo.language}. Its description is '${selectedRepo.description}'. Use this context to answer user's questions about this specific project, such as suggesting new features, explaining code, or helping with documentation.`
                 : `You are a senior tech career advisor and GitHub expert. You have already provided the user with an initial analysis of their GitHub projects. Now, continue the conversation, answering their follow-up questions. Here is the context of the user's projects:\n${JSON.stringify(repoSummaries, null, 2)}`;
             
+            // Updated model name to gemini-3-pro-preview for best results in chat
             const newChat = ai.chats.create({ 
-              model: 'gemini-2.5-pro', 
+              model: 'gemini-3-pro-preview', 
               history: initialHistory,
               config: {
                 systemInstruction
@@ -124,6 +126,7 @@ const AiChatPanel: React.FC<AiChatPanelProps> = ({ selectedRepo, repos, user, co
             setChatHistory(prev => [...prev, { role: 'model', text: '' }]);
 
             for await (const chunk of result) {
+                // Accessing chunk.text directly as it is a property, not a method.
                 currentModelMessage += chunk.text;
                 setChatHistory(prev => {
                     const newHistory = [...prev];
