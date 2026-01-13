@@ -79,6 +79,14 @@ const en: Translation = {
   readme: 'Project README',
   noReadme: 'No README found for this project.',
 
+  // Project Spotlight
+  projectSpotlight: 'Project Spotlight',
+  coreValue: 'Core Value',
+  technicalHighlights: 'Technical Highlights',
+  keyFeatures: 'Key Features',
+  architectureStack: 'Architecture & Stack',
+  challengesFaced: 'Likely Technical Challenges',
+
   // AI Chat Panel
   portfolioAdvisor: 'Portfolio Advisor',
   projectAssistant: 'Project Assistant',
@@ -182,6 +190,14 @@ const zhTW: Translation = {
   noOtherBranches: '找不到其他進行中的分支。',
   readme: '專案 README',
   noReadme: '此專案找不到 README 文件。',
+
+  // Project Spotlight
+  projectSpotlight: '專案精華展示',
+  coreValue: '核心價值',
+  technicalHighlights: '技術亮點',
+  keyFeatures: '主要功能',
+  architectureStack: '架構與技術棧',
+  challengesFaced: '潛在技術挑戰',
   
   // AI Chat Panel
   portfolioAdvisor: '組合顧問',

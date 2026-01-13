@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails, FilterType } from './types';
 import { getAllRepos, getUser, getLatestCommit, getContributionData, getRepoBranches, getReadme } from './services/githubService';
-import { analyzeCommitMessage, summarizeProject } from './services/geminiService';
+import { analyzeCommitMessage, summarizeProject, generateProjectSpotlight } from './services/geminiService';
 import AuthScreen from './components/AuthScreen';
 import Dashboard from './components/Dashboard';
 import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
@@ -13,7 +13,7 @@ const AppContent: React.FC = () => {
   const [repos, setRepos] = useState<GithubRepo[]>([]);
   const [contributionData, setContributionData] = useState<ContributionData | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<GithubRepo | null>(null);
-  const [selectedForShowcaseIds, setSelectedForShowcaseIds] = useState<number[]>([]); // New Multi-selection state
+  const [selectedForShowcaseIds, setSelectedForShowcaseIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isDetailLoading, setIsDetailLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +60,6 @@ const AppContent: React.FC = () => {
     setSelectedRepo(null);
     setSelectedForShowcaseIds([]);
     setError(null);
-    setFilterType('all');
   };
 
   const fetchData = useCallback(async (token: string) => {
@@ -77,7 +76,7 @@ const AppContent: React.FC = () => {
       setRepos(repoData);
       setContributionData(contribData);
     } catch (err) {
-      setError('Failed to fetch data. Please check your Personal Access Token and permissions.');
+      setError('Failed to fetch data.');
       handleSignOut();
     } finally {
       setIsLoading(false);
@@ -93,7 +92,6 @@ const AppContent: React.FC = () => {
     if (pat) {
       fetchData(pat);
       setSelectedRepo(null);
-      setSelectedForShowcaseIds([]);
     }
   };
 
@@ -101,9 +99,7 @@ const AppContent: React.FC = () => {
     const fetchDetails = async () => {
       if (selectedRepo && pat) {
         const cachedCommit = commitCache[selectedRepo.id]?.[language];
-        const cachedBranches = branchCache[selectedRepo.id];
-
-        if (cachedCommit && cachedBranches && cachedCommit.readme !== undefined) {
+        if (cachedCommit && cachedCommit.spotlight) {
           setIsDetailLoading(false);
           return;
         }
@@ -116,7 +112,7 @@ const AppContent: React.FC = () => {
             return {
               name: branch.name,
               lastCommit: {
-                message: branchCommit?.commit.message || 'No commit message found.',
+                message: branchCommit?.commit.message || 'No commit message.',
                 date: branchCommit?.commit.author?.date || new Date(0).toISOString(),
               }
             } as BranchDetails;
@@ -128,9 +124,10 @@ const AppContent: React.FC = () => {
           const latestBranch = allBranchDetails[0];
           const readmeContent = await getReadme(pat, selectedRepo.owner.login, selectedRepo.name);
 
-          const [source, summary] = await Promise.all([
+          const [source, summary, spotlight] = await Promise.all([
             analyzeCommitMessage(latestBranch.lastCommit.message, language),
-            summarizeProject(selectedRepo.name, selectedRepo.description || '', latestBranch.lastCommit.message, readmeContent, language)
+            summarizeProject(selectedRepo.name, selectedRepo.description || '', latestBranch.lastCommit.message, readmeContent, language),
+            generateProjectSpotlight(selectedRepo, readmeContent, language)
           ]);
 
           const commitData: CommitInfo = {
@@ -140,33 +137,17 @@ const AppContent: React.FC = () => {
             branchName: latestBranch.name,
             aiSummary: summary,
             readme: readmeContent,
+            spotlight: spotlight
           };
 
           setCommitCache(prev => ({ 
             ...prev, 
             [selectedRepo.id]: { ...prev[selectedRepo.id], [language]: commitData } 
           }));
-          
-          setBranchCache(prev => ({
-            ...prev,
-            [selectedRepo.id]: allBranchDetails
-          }));
+          setBranchCache(prev => ({ ...prev, [selectedRepo.id]: allBranchDetails }));
 
         } catch (err) {
-          console.error("Failed to fetch repository details:", err);
-          const errorCommitData: CommitInfo = { 
-            message: 'Could not fetch latest commit information.', 
-            date: new Date().toISOString(), 
-            source: 'Unknown', 
-            branchName: 'Unknown',
-            aiSummary: 'Analysis failed due to an error fetching commit data.',
-            readme: null
-          };
-          setCommitCache(prev => ({
-            ...prev,
-            [selectedRepo.id]: { ...prev[selectedRepo.id], [language]: errorCommitData }
-          }));
-          setBranchCache(prev => ({ ...prev, [selectedRepo.id]: [] }));
+          console.error("Detail fetch error:", err);
         } finally {
           setIsDetailLoading(false);
         }
@@ -181,10 +162,7 @@ const AppContent: React.FC = () => {
 
   const filteredRepos = repos.filter(repo => {
     const matchesSearch = repo.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = 
-      filterType === 'all' ? true :
-      filterType === 'private' ? repo.private :
-      !repo.private; 
+    const matchesFilter = filterType === 'all' ? true : filterType === 'private' ? repo.private : !repo.private; 
     return matchesSearch && matchesFilter;
   });
 

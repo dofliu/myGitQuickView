@@ -21,22 +21,32 @@ export interface GithubRepo {
   default_branch: string;
 }
 
+// Added GithubCommit interface to match the structure returned by GitHub REST API for commit details
 export interface GithubCommit {
-    commit: {
-        message: string;
-        author: {
-            date: string;
-        } | null;
+  sha: string;
+  commit: {
+    message: string;
+    author?: {
+      date: string;
     };
+  };
+}
+
+export interface ProjectSpotlight {
+  coreValue: string;
+  technicalChallenges: string[];
+  keyFeatures: string[];
+  techStack: string[];
 }
 
 export interface CommitInfo {
     message: string;
     date: string;
     source: string;
-    branchName: string; // New field
+    branchName: string;
     aiSummary?: string;
     readme?: string | null;
+    spotlight?: ProjectSpotlight; // New: Depth analysis for showcase
 }
 
 export interface ContributionDay {
