@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { GithubRepo, FilterType } from '../types';
 import { useLocalization } from '../contexts/LocalizationContext';
 
@@ -33,13 +33,13 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, colorClass, isActive,
 
 const SummaryStats: React.FC<SummaryStatsProps> = ({ repos, currentFilter, onFilterChange }) => {
   const { t } = useLocalization();
+  const chartRef = useRef<HTMLCanvasElement>(null);
+  const chartInstance = useRef<any>(null);
+  
   const totalRepos = repos.length;
   const privateRepos = repos.filter(r => r.private).length;
   const publicRepos = totalRepos - privateRepos;
 
-  // FIX: Replaced `reduce` with a `for...of` loop for more robust type inference.
-  // This ensures `languageCounts` is correctly typed as `Record<string, number>`,
-  // which resolves the TypeScript error during the sort operation.
   const languageCounts: Record<string, number> = {};
   for (const repo of repos) {
     if (repo.language) {
@@ -48,6 +48,50 @@ const SummaryStats: React.FC<SummaryStatsProps> = ({ repos, currentFilter, onFil
   }
 
   const sortedLanguages = Object.entries(languageCounts).sort((a, b) => b[1] - a[1]).slice(0, 4);
+
+  useEffect(() => {
+    if (!chartRef.current) return;
+    
+    // Destroy existing chart
+    if (chartInstance.current) {
+      chartInstance.current.destroy();
+    }
+    
+    const ctx = chartRef.current.getContext('2d');
+    if (!ctx) return;
+    
+    chartInstance.current = new (window as any).Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: sortedLanguages.map(([lang]) => lang),
+        datasets: [{
+          data: sortedLanguages.map(([, count]) => count),
+          backgroundColor: ['#06b6d4', '#a855f7', '#22c55e', '#f59e0b', '#ef4444', '#ec4899'],
+          borderWidth: 0,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#9ca3af',
+              padding: 12,
+              font: { size: 11 }
+            }
+          }
+        }
+      }
+    });
+    
+    return () => {
+      if (chartInstance.current) {
+        chartInstance.current.destroy();
+      }
+    };
+  }, [repos]);
 
   return (
     <div className="h-full flex flex-col gap-4">
@@ -74,16 +118,17 @@ const SummaryStats: React.FC<SummaryStatsProps> = ({ repos, currentFilter, onFil
                 onClick={() => onFilterChange('private')}
             />
         </div>
-        <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700 flex-grow">
+        <div className="bg-gray-800/50 p-4 rounded-xl border border-gray-700 flex-grow min-h-[200px]">
           <h3 className="text-sm font-medium text-purple-400 mb-2">{t('topLanguages')}</h3>
-          <div className="space-y-2">
-              {sortedLanguages.map(([lang, count]) => (
-                  <div key={lang} className="flex justify-between items-center text-sm">
-                      <span className="text-gray-300">{lang}</span>
-                      <span className="font-semibold text-white bg-gray-700 px-2 py-0.5 rounded-full text-xs">{count}</span>
-                  </div>
-              ))}
-          </div>
+          {sortedLanguages.length > 0 ? (
+            <div className="h-[160px]">
+              <canvas ref={chartRef} />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[160px] text-gray-500 text-sm">
+              {t('noRepositories')}
+            </div>
+          )}
       </div>
     </div>
   );
