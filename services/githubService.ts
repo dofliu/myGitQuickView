@@ -58,6 +58,19 @@ export const getLatestCommit = async (token: string, owner: string, repo: string
     }
 };
 
+export const getCommits = async (token: string, owner: string, repo: string, perPage: number = 10): Promise<GithubCommit[]> => {
+    try {
+        const commits = await githubApiFetch<GithubCommit[]>(
+            `/repos/${owner}/${repo}/commits?per_page=${perPage}`, 
+            token
+        );
+        return commits;
+    } catch (error) {
+        console.error(`Could not fetch commits for ${owner}/${repo}:`, error);
+        return [];
+    }
+};
+
 export const getRepoBranches = async (token: string, owner: string, repo: string): Promise<GithubBranch[]> => {
     try {
         return await githubApiFetch<GithubBranch[]>(`/repos/${owner}/${repo}/branches`, token);

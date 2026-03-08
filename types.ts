@@ -28,6 +28,7 @@ export interface GithubCommit {
     message: string;
     author?: {
       date: string;
+      name?: string;
     };
   };
 }

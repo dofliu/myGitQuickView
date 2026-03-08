@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails, FilterType } from '../types';
+import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails, FilterType, GithubCommit } from '../types';
 import SummaryStats from './SummaryStats';
 import RepoList from './RepoList';
 import RepoGrid from './RepoGrid';
@@ -21,6 +21,7 @@ interface DashboardProps {
   selectedForShowcaseIds: number[];
   commitInfo: CommitInfo | null;
   branches: BranchDetails[] | null;
+  commitHistory: GithubCommit[];
   onSelectRepo: (repo: GithubRepo | null) => void;
   onToggleShowcaseSelection: (repoId: number) => void;
   onRefresh: () => void;
@@ -44,6 +45,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   selectedForShowcaseIds,
   commitInfo,
   branches,
+  commitHistory,
   onSelectRepo,
   onToggleShowcaseSelection,
   onRefresh,
@@ -84,6 +86,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               repo={selectedRepo} 
               commitInfo={commitInfo}
               branches={branches}
+              commitHistory={commitHistory}
               onBack={() => onSelectRepo(null)}
               isLoading={isDetailLoading} 
             />

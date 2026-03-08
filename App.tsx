@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails, FilterType } from './types';
-import { getAllRepos, getUser, getLatestCommit, getContributionData, getRepoBranches, getReadme } from './services/githubService';
+import { GithubRepo, GithubUser, CommitInfo, ContributionData, BranchDetails, FilterType, GithubCommit } from './types';
+import { getAllRepos, getUser, getLatestCommit, getContributionData, getRepoBranches, getReadme, getCommits } from './services/githubService';
 import { analyzeCommitMessage, summarizeProject, generateProjectSpotlight } from './services/geminiService';
 import AuthScreen from './components/AuthScreen';
 import Dashboard from './components/Dashboard';
@@ -28,6 +28,8 @@ const AppContent: React.FC = () => {
   });
   
   const [branchCache, setBranchCache] = useState<{[repoId: number]: BranchDetails[]}>({});
+  
+  const [commitHistoryCache, setCommitHistoryCache] = useState<{[repoId: number]: GithubCommit[]}>({});
 
   const [pinnedRepoIds, setPinnedRepoIds] = useState<number[]>(() => {
     const savedPins = localStorage.getItem('pinnedRepos');
@@ -145,6 +147,10 @@ const AppContent: React.FC = () => {
             [selectedRepo.id]: { ...prev[selectedRepo.id], [language]: commitData } 
           }));
           setBranchCache(prev => ({ ...prev, [selectedRepo.id]: allBranchDetails }));
+          
+          // Fetch commit history
+          const commitsHistory = await getCommits(pat, selectedRepo.owner.login, selectedRepo.name);
+          setCommitHistoryCache(prev => ({ ...prev, [selectedRepo.id]: commitsHistory }));
 
         } catch (err) {
           console.error("Detail fetch error:", err);
@@ -176,6 +182,7 @@ const AppContent: React.FC = () => {
   
   const currentCommitInfo = selectedRepo ? commitCache[selectedRepo.id]?.[language] : null;
   const currentBranches = selectedRepo ? branchCache[selectedRepo.id] : null;
+  const commitHistory = selectedRepo ? commitHistoryCache[selectedRepo.id] || [] : [];
 
   return (
     <Dashboard
@@ -187,6 +194,7 @@ const AppContent: React.FC = () => {
       selectedForShowcaseIds={selectedForShowcaseIds}
       commitInfo={currentCommitInfo}
       branches={currentBranches}
+      commitHistory={commitHistory}
       onSelectRepo={setSelectedRepo}
       onToggleShowcaseSelection={toggleShowcaseSelection}
       onRefresh={handleRefresh}

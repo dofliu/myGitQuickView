@@ -112,6 +112,10 @@ const en: Translation = {
   showcaseDescription: 'Create a professional summary of this project for your resume or portfolio.',
   copyShowcase: 'Copy to Clipboard',
   showcaseCopied: 'Copied!',
+
+  // Commit History
+  commitHistory: 'Commit History',
+  analyzing: 'Analyzing...',
 };
 
 const zhTW: Translation = {
@@ -224,6 +228,10 @@ const zhTW: Translation = {
   showcaseDescription: '為您的履歷或作品集建立此專案的專業總結。',
   copyShowcase: '複製摘要',
   showcaseCopied: '已複製！',
+
+  // Commit History
+  commitHistory: '提交歷史',
+  analyzing: '分析中...',
 };
 
 export const translations = {

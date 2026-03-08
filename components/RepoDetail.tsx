@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { GithubRepo, CommitInfo, BranchDetails } from '../types';
+import { GithubRepo, CommitInfo, BranchDetails, GithubCommit } from '../types';
 import { useLocalization } from '../contexts/LocalizationContext';
 import { SparklesIcon } from './icons/SparklesIcon';
 
@@ -8,6 +8,7 @@ interface RepoDetailProps {
   repo: GithubRepo;
   commitInfo: CommitInfo | null;
   branches: BranchDetails[] | null;
+  commitHistory: GithubCommit[];
   onBack: () => void;
   isLoading: boolean;
 }
@@ -62,7 +63,7 @@ const SimpleMarkdownRenderer: React.FC<{ content: string }> = ({ content }) => {
     return <div className="prose prose-invert prose-sm max-w-none text-gray-300 leading-relaxed whitespace-pre-wrap" dangerouslySetInnerHTML={{ __html: formatMarkdown(content) }} />;
 };
 
-const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, onBack, isLoading }) => {
+const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, commitHistory, onBack, isLoading }) => {
     const { t } = useLocalization();
     const spotlight = commitInfo?.spotlight;
 
@@ -107,6 +108,37 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, onB
                     </div>
                 </div>
             </div>
+
+            {/* Commit History Section */}
+            {commitHistory.length > 0 && (
+                <section className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <svg className="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <h3 className="text-2xl font-bold text-white">{t('commitHistory')}</h3>
+                    </div>
+                    <div className="bg-gray-800/30 rounded-xl border border-gray-700/50 overflow-hidden">
+                        {commitHistory.slice(0, 10).map((commit, index) => (
+                            <div key={commit.sha} className={`p-4 flex items-start gap-4 ${index !== 0 ? 'border-t border-gray-700/50' : ''}`}>
+                                <div className="flex-shrink-0 mt-1">
+                                    <div className="h-3 w-3 rounded-full bg-cyan-500"></div>
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-gray-200 text-sm font-medium truncate">{commit.commit.message}</p>
+                                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-500">
+                                        <span className="font-mono text-cyan-400">{commit.sha.substring(0, 7)}</span>
+                                        <span>•</span>
+                                        <span>{commit.commit.author?.name || 'Unknown'}</span>
+                                        <span>•</span>
+                                        <span>{commit.commit.author?.date ? new Date(commit.commit.author.date).toLocaleDateString() : 'Unknown date'}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             {/* AI Technical Spotlight Section */}
             <section className="space-y-6">
