@@ -127,6 +127,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 onTogglePin={onTogglePin}
                 selectedForShowcaseIds={selectedForShowcaseIds}
                 onToggleShowcase={onToggleShowcaseSelection}
+                searchTerm={searchTerm}
               />
             </>
           )}

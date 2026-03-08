@@ -13,10 +13,26 @@ interface RepoGridProps {
   selectedForShowcaseIds: number[];
   onToggleShowcase: (repoId: number) => void;
   isLoading?: boolean;
+  searchTerm?: string;
 }
 
-const RepoGrid: React.FC<RepoGridProps> = ({ repos, onSelectRepo, pinnedRepoIds, onTogglePin, selectedForShowcaseIds, onToggleShowcase, isLoading }) => {
+const RepoGrid: React.FC<RepoGridProps> = ({ repos, onSelectRepo, pinnedRepoIds, onTogglePin, selectedForShowcaseIds, onToggleShowcase, isLoading, searchTerm }) => {
   const { t } = useLocalization();
+  
+  // Empty state
+  if (!isLoading && repos.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="text-6xl mb-4">{searchTerm ? '🔍' : '📂'}</div>
+        <h3 className="text-xl font-semibold text-gray-300 mb-2">
+          {searchTerm ? t('noProjectsFound') : t('noRepositories')}
+        </h3>
+        <p className="text-gray-500 text-sm">
+          {searchTerm ? t('noProjectsFoundHint') : t('noRepositoriesHint')}
+        </p>
+      </div>
+    );
+  }
   
   return (
     <div>

@@ -122,6 +122,14 @@ const en: Translation = {
   errorRateLimit: 'Rate Limit Exceeded',
   errorNetwork: 'Network Error',
   errorServer: 'Server Error',
+
+  // Empty States
+  noProjectsFound: 'No projects found',
+  noProjectsFoundHint: 'No repositories match your search...',
+  noRepositories: 'No repositories yet',
+  noRepositoriesHint: 'Your GitHub repositories will appear here...',
+  noCommitsFound: 'No commits yet',
+  noCommitsFoundHint: 'This repository has no commit history...',
 };
 
 const zhTW: Translation = {
@@ -244,6 +252,14 @@ const zhTW: Translation = {
   errorRateLimit: '超過 API 請求限制',
   errorNetwork: '網路錯誤',
   errorServer: '伺服器錯誤',
+
+  // Empty States
+  noProjectsFound: '找不到專案',
+  noProjectsFoundHint: '找不到符合的儲存庫，請嘗試不同的關鍵字',
+  noRepositories: '尚無儲存庫',
+  noRepositoriesHint: '您的 GitHub 儲存庫將在此處顯示',
+  noCommitsFound: '尚無提交記錄',
+  noCommitsFoundHint: '此儲存庫目前沒有提交歷史記錄',
 };
 
 export const translations = {

@@ -110,14 +110,14 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, com
             </div>
 
             {/* Commit History Section */}
-            {commitHistory.length > 0 && (
-                <section className="space-y-4">
-                    <div className="flex items-center gap-3">
-                        <svg className="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <h3 className="text-2xl font-bold text-white">{t('commitHistory')}</h3>
-                    </div>
+            <section className="space-y-4">
+                <div className="flex items-center gap-3">
+                    <svg className="h-6 w-6 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 className="text-2xl font-bold text-white">{t('commitHistory')}</h3>
+                </div>
+                {commitHistory.length > 0 ? (
                     <div className="bg-gray-800/30 rounded-xl border border-gray-700/50 overflow-hidden">
                         {commitHistory.slice(0, 10).map((commit, index) => (
                             <div key={commit.sha} className={`p-4 flex items-start gap-4 ${index !== 0 ? 'border-t border-gray-700/50' : ''}`}>
@@ -138,6 +138,12 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, com
                         ))}
                     </div>
                 </section>
+            ) : !isLoading && (
+                <div className="flex flex-col items-center justify-center py-12 text-center bg-gray-800/20 rounded-xl border border-gray-700/30">
+                    <div className="text-5xl mb-3">📭</div>
+                    <h3 className="text-gray-400 font-semibold mb-1">{t('noCommitsFound')}</h3>
+                    <p className="text-gray-600 text-sm">{t('noCommitsFoundHint')}</p>
+                </div>
             )}
 
             {/* AI Technical Spotlight Section */}
