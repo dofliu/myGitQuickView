@@ -19,6 +19,9 @@ This document outlines the long-term vision and planned development milestones f
 -   **Core UI**:
     -   Sidebar with a sorted list of projects.
     -   Header with user info, refresh, and sign-out controls.
+-   **Search & Filter**: Search by name, filter by public/private status. ✅ (2026-03-08)
+-   **Commit History**: Show last 10 commits. ✅ (2026-03-08)
+-   **Error Handling**: Detailed error messages for API errors. ✅ (2026-03-08)
 
 ---
 
