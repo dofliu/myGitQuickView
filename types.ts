@@ -12,6 +12,41 @@ export interface GithubOrg {
   description: string | null;
 }
 
+export interface GithubIssue {
+  number: number;
+  title: string;
+  state: 'open' | 'closed';
+  html_url: string;
+  created_at: string;
+  updated_at: string;
+  user: {
+    login: string;
+    avatar_url: string;
+  };
+  labels: {
+    name: string;
+    color: string;
+  }[];
+  body: string | null;
+}
+
+export interface GithubPull {
+  number: number;
+  title: string;
+  state: 'open' | 'closed' | 'merged';
+  html_url: string;
+  created_at: string;
+  updated_at: string;
+  merged_at: string | null;
+  user: {
+    login: string;
+    avatar_url: string;
+  };
+  head: { ref: string };
+  base: { ref: string };
+  draft: boolean;
+}
+
 export interface GithubRepo {
   id: number;
   name:string;

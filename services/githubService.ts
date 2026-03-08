@@ -1,5 +1,5 @@
 
-import { GithubUser, GithubRepo, GithubCommit, ContributionData, GithubBranch, GithubOrg } from '../types';
+import { GithubUser, GithubRepo, GithubCommit, ContributionData, GithubBranch, GithubOrg, GithubIssue, GithubPull } from '../types';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 
@@ -176,4 +176,38 @@ export const getContributionData = async (token: string, username: string): Prom
   });
 
   return response.data.user.contributionsCollection.contributionCalendar;
+};
+
+export const getRepoIssues = async (
+  token: string,
+  owner: string,
+  repo: string,
+  state: 'open' | 'closed' | 'all' = 'open'
+): Promise<GithubIssue[]> => {
+  try {
+    return await githubApiFetch<GithubIssue[]>(
+      `/repos/${owner}/${repo}/issues?state=${state}&per_page=30`,
+      token
+    );
+  } catch (error) {
+    console.error(`Could not fetch issues for ${owner}/${repo}:`, error);
+    return [];
+  }
+};
+
+export const getRepoPulls = async (
+  token: string,
+  owner: string,
+  repo: string,
+  state: 'open' | 'closed' | 'all' = 'open'
+): Promise<GithubPull[]> => {
+  try {
+    return await githubApiFetch<GithubPull[]>(
+      `/repos/${owner}/${repo}/pulls?state=${state}&per_page=30`,
+      token
+    );
+  } catch (error) {
+    console.error(`Could not fetch pull requests for ${owner}/${repo}:`, error);
+    return [];
+  }
 };
