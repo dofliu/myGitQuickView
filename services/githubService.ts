@@ -1,5 +1,5 @@
 
-import { GithubUser, GithubRepo, GithubCommit, ContributionData, GithubBranch } from '../types';
+import { GithubUser, GithubRepo, GithubCommit, ContributionData, GithubBranch, GithubOrg } from '../types';
 
 const GITHUB_API_BASE = 'https://api.github.com';
 
@@ -39,6 +39,29 @@ const githubApiFetch = async <T,>(endpoint: string, token: string, options: Requ
 
 export const getUser = async (token: string): Promise<GithubUser> => {
   return githubApiFetch<GithubUser>('/user', token);
+};
+
+export const getUserOrgs = async (token: string): Promise<GithubOrg[]> => {
+  return githubApiFetch<GithubOrg[]>('/user/orgs', token);
+};
+
+export const getOrgRepos = async (token: string, org: string): Promise<GithubRepo[]> => {
+  const repos: GithubRepo[] = [];
+  let page = 1;
+  const perPage = 100;
+
+  while (true) {
+    const currentRepos = await githubApiFetch<GithubRepo[]>(
+      `/orgs/${org}/repos?type=all&per_page=${perPage}&page=${page}&sort=pushed`,
+      token
+    );
+    repos.push(...currentRepos);
+    if (currentRepos.length < perPage) {
+      break;
+    }
+    page++;
+  }
+  return repos;
 };
 
 export const getAllRepos = async (token: string): Promise<GithubRepo[]> => {

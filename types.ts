@@ -6,6 +6,12 @@ export interface GithubUser {
   html_url: string;
 }
 
+export interface GithubOrg {
+  login: string;
+  avatar_url: string;
+  description: string | null;
+}
+
 export interface GithubRepo {
   id: number;
   name:string;
