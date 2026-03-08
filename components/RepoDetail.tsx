@@ -5,12 +5,12 @@ import { useLocalization } from '../contexts/LocalizationContext';
 import { SparklesIcon } from './icons/SparklesIcon';
 
 interface RepoDetailProps {
-  repo: GithubRepo;
-  commitInfo: CommitInfo | null;
-  branches: BranchDetails[] | null;
-  commitHistory: GithubCommit[];
-  onBack: () => void;
-  isLoading: boolean;
+    repo: GithubRepo;
+    commitInfo: CommitInfo | null;
+    branches: BranchDetails[] | null;
+    commitHistory: GithubCommit[];
+    onBack: () => void;
+    isLoading: boolean;
 }
 
 const DetailItem: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
@@ -74,7 +74,7 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, com
                 <div className="absolute top-0 right-0 p-8 opacity-10">
                     <SparklesIcon className="h-40 w-40 text-cyan-400" />
                 </div>
-                
+
                 <div className="p-8 md:p-12 relative z-10">
                     <button onClick={onBack} className="flex items-center gap-2 text-sm text-cyan-400 hover:text-cyan-300 mb-8 transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -90,7 +90,7 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, com
                                 {repo.private && <span className="px-2 py-0.5 rounded bg-yellow-500/10 text-yellow-500 text-[10px] font-bold uppercase tracking-widest border border-yellow-500/20">Private</span>}
                             </div>
                             <p className="text-xl text-gray-400 max-w-2xl leading-relaxed">{repo.description || t('noDescription')}</p>
-                            
+
                             <div className="flex flex-wrap gap-2 mt-6">
                                 {spotlight?.techStack.map(tech => (
                                     <span key={tech} className="px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-300 text-xs font-semibold border border-cyan-500/20">
@@ -100,8 +100,8 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, com
                             </div>
                         </div>
                         <div className="flex flex-col gap-3 w-full md:w-auto">
-                            <a href={repo.html_url} target="_blank" rel="noopener noreferrer" 
-                               className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-8 rounded-xl transition duration-200 text-center shadow-lg shadow-cyan-900/20">
+                            <a href={repo.html_url} target="_blank" rel="noopener noreferrer"
+                                className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-3 px-8 rounded-xl transition duration-200 text-center shadow-lg shadow-cyan-900/20">
                                 {t('viewOnGithub')}
                             </a>
                         </div>
@@ -137,14 +137,14 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, com
                             </div>
                         ))}
                     </div>
-                </section>
-            ) : !isLoading && (
-                <div className="flex flex-col items-center justify-center py-12 text-center bg-gray-800/20 rounded-xl border border-gray-700/30">
-                    <div className="text-5xl mb-3">📭</div>
-                    <h3 className="text-gray-400 font-semibold mb-1">{t('noCommitsFound')}</h3>
-                    <p className="text-gray-600 text-sm">{t('noCommitsFoundHint')}</p>
-                </div>
-            )}
+                ) : !isLoading && (
+                    <div className="flex flex-col items-center justify-center py-12 text-center bg-gray-800/20 rounded-xl border border-gray-700/30">
+                        <div className="text-5xl mb-3">📭</div>
+                        <h3 className="text-gray-400 font-semibold mb-1">{t('noCommitsFound')}</h3>
+                        <p className="text-gray-600 text-sm">{t('noCommitsFoundHint')}</p>
+                    </div>
+                )}
+            </section>
 
             {/* AI Technical Spotlight Section */}
             <section className="space-y-6">
@@ -164,22 +164,22 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, com
                             <h4 className="text-purple-400 font-bold mb-3 uppercase tracking-wider text-xs">{t('coreValue')}</h4>
                             <p className="text-lg text-gray-200 leading-relaxed italic">"{spotlight.coreValue}"</p>
                         </div>
-                        
-                        <SpotlightCard 
-                            title={t('keyFeatures')} 
-                            items={spotlight.keyFeatures} 
+
+                        <SpotlightCard
+                            title={t('keyFeatures')}
+                            items={spotlight.keyFeatures}
                             icon={<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>}
                             color="green"
                         />
-                        <SpotlightCard 
-                            title={t('challengesFaced')} 
-                            items={spotlight.technicalChallenges} 
+                        <SpotlightCard
+                            title={t('challengesFaced')}
+                            items={spotlight.technicalChallenges}
                             icon={<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
                             color="orange"
                         />
-                         <SpotlightCard 
-                            title={t('architectureStack')} 
-                            items={spotlight.techStack} 
+                        <SpotlightCard
+                            title={t('architectureStack')}
+                            items={spotlight.techStack}
                             icon={<svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>}
                             color="cyan"
                         />
@@ -250,7 +250,7 @@ const RepoDetail: React.FC<RepoDetailProps> = ({ repo, commitInfo, branches, com
                     </div>
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 
