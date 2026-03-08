@@ -6,6 +6,7 @@ import { analyzeCommitMessage, summarizeProject, generateProjectSpotlight } from
 import AuthScreen from './components/AuthScreen';
 import Dashboard from './components/Dashboard';
 import { LocalizationProvider, useLocalization } from './contexts/LocalizationContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 
 const AppContent: React.FC = () => {
   const [pat, setPat] = useState<string | null>(null);
@@ -212,9 +213,11 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => (
-  <LocalizationProvider>
-    <AppContent />
-  </LocalizationProvider>
+  <ThemeProvider>
+    <LocalizationProvider>
+      <AppContent />
+    </LocalizationProvider>
+  </ThemeProvider>
 )
 
 export default App;
