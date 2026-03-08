@@ -116,6 +116,12 @@ const en: Translation = {
   // Commit History
   commitHistory: 'Commit History',
   analyzing: 'Analyzing...',
+
+  // Error Messages
+  errorInvalidToken: 'Invalid Token',
+  errorRateLimit: 'Rate Limit Exceeded',
+  errorNetwork: 'Network Error',
+  errorServer: 'Server Error',
 };
 
 const zhTW: Translation = {
@@ -232,6 +238,12 @@ const zhTW: Translation = {
   // Commit History
   commitHistory: '提交歷史',
   analyzing: '分析中...',
+
+  // Error Messages
+  errorInvalidToken: '無效的權杖',
+  errorRateLimit: '超過 API 請求限制',
+  errorNetwork: '網路錯誤',
+  errorServer: '伺服器錯誤',
 };
 
 export const translations = {

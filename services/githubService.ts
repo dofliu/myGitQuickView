@@ -15,6 +15,22 @@ const githubApiFetch = async <T,>(endpoint: string, token: string, options: Requ
   });
 
   if (!response.ok) {
+    // Handle specific GitHub API errors
+    if (response.status === 401) {
+      throw new Error('INVALID_TOKEN: Your access token is invalid or has been revoked. Please generate a new token.');
+    } else if (response.status === 403) {
+      const remaining = response.headers.get('X-RateLimit-Remaining');
+      if (remaining === '0') {
+        const resetTime = response.headers.get('X-RateLimit-Reset');
+        const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000).toLocaleTimeString() : 'unknown time';
+        throw new Error(`RATE_LIMIT: You have exceeded the API rate limit. Please try again after ${resetDate}.`);
+      }
+      throw new Error('FORBIDDEN: You do not have permission to access this resource.');
+    } else if (response.status === 404) {
+      throw new Error('NOT_FOUND: The requested resource was not found.');
+    } else if (response.status >= 500) {
+      throw new Error('SERVER_ERROR: GitHub server is experiencing issues. Please try again later.');
+    }
     throw new Error(`GitHub API request failed: ${response.statusText}`);
   }
   return response.json();
